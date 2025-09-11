@@ -16,9 +16,15 @@ import Link from 'next/link';
 export default function LoginPage() {
   async function login(formData: FormData) {
     'use server';
-    const role = 'advocate';
-    const mode = 'fast';
-    redirect(`/dashboard?role=${role}&mode=${mode}`);
+    // TODO: Add actual authentication logic here
+    const email = formData.get('email');
+    const password = formData.get('password');
+
+    if (email && password) {
+        const role = 'advocate';
+        const mode = 'fast';
+        redirect(`/dashboard?role=${role}&mode=${mode}`);
+    }
   }
 
   return (
@@ -50,8 +56,6 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   placeholder="advocate@example.com"
-                  required
-                  defaultValue="advocate@example.com"
                 />
               </div>
               <div className="space-y-2">
@@ -61,7 +65,7 @@ export default function LoginPage() {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" name="password" type="password" required defaultValue="password" />
+                <Input id="password" name="password" type="password" />
               </div>
 
             </CardContent>
