@@ -1,32 +1,21 @@
+'use client';
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
+  CardDescription,
 } from '@/components/ui/card';
 import {
-  FileUp,
   Briefcase,
-  ShieldCheck,
   Search as SearchIcon,
-  Activity,
-  Upload,
-  Users,
-  Database,
-  LineChart,
-  GitBranch
+  FileText,
+  Clock,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from '@/components/ui/badge';
+import { useSearchParams } from 'next/navigation';
 
 type QuickAccessTileProps = {
   title: string;
@@ -35,96 +24,124 @@ type QuickAccessTileProps = {
   href: string;
 };
 
-function StatusCard({ title, value, status }: { title: string, value: string, status: 'Healthy' | 'Errors' }) {
+function QuickAccessTile({
+  title,
+  description,
+  icon: Icon,
+  href,
+}: QuickAccessTileProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-         <Badge variant={status === 'Healthy' ? 'default' : 'destructive'} className="bg-green-100 text-green-800 border-green-200">
-            {status}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-      </CardContent>
-    </Card>
+    <Link href={href} className="block hover:bg-muted/50 rounded-lg">
+      <Card className="h-full transition-all border-border hover:border-primary">
+        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+          <div className="bg-primary/10 p-3 rounded-full">
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-lg font-headline">{title}</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
+export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  const role = searchParams.get('role') || 'user';
+  const caseManagementUrl = `/dashboard/case-management?${searchParams.toString()}`;
+  const caseLawSearchUrl = `/dashboard/case-law-search?${searchParams.toString()}`;
 
-export default function DashboardPage({
-  searchParams,
-}: {
-  searchParams: { role?: string; mode?: string };
-}) {
-  const recentLogs = [
-      { time: '2024-07-29 10:45:12', source: 'Supreme Court', status: 'Success', action: 'Indexed 15 docs' },
-      { time: '2024-07-29 10:42:01', source: 'Delhi High Court', status: 'Success', action: 'Indexed 8 docs' },
-      { time: '2024-07-29 10:35:54', source: 'NCLAT', status: 'Error', action: 'Connection failed' },
-      { time: '2024-07-29 10:30:19', source: 'Bombay High Court', status: 'Success', action: 'Indexed 22 docs' },
-    ];
-
+  const recentActivities = [
+    {
+      action: 'Drafted a new petition',
+      details: 'Civil Suit for Recovery',
+      time: '2 hours ago',
+    },
+    {
+      action: 'Searched for case law',
+      details: '"Anticipatory bail under Section 438"',
+      time: '5 hours ago',
+    },
+    {
+      action: 'Summarized a document',
+      details: 'Lease_Agreement_Final.pdf',
+      time: '1 day ago',
+    },
+    {
+      action: 'Translated text',
+      details: 'To Hindi',
+      time: '2 days ago',
+    },
+  ];
 
   return (
     <div className="flex-1 space-y-8">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">
-          Admin Dashboard
+          Welcome to LegalAi, {role.charAt(0).toUpperCase() + role.slice(1)}
         </h2>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatusCard title="Ingestion Status" value="Healthy" status="Healthy" />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Indexed Docs</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,254,890</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Uploads</CardTitle>
-            <Upload className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-          </CardContent>
-        </Card>
+        <p className="text-muted-foreground">
+          Your AI-powered legal assistant for India is ready to help.
+        </p>
       </div>
 
       <div>
-        <h3 className="text-xl font-semibold font-headline mb-4">Recent Logs</h3>
-        <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentLogs.map((log, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{log.time}</TableCell>
-                    <TableCell>{log.source}</TableCell>
-                    <TableCell>
-                      <Badge variant={log.status === 'Success' ? 'secondary' : 'destructive'} className={log.status === 'Success' ? 'bg-green-100 text-green-800' : ''}>
-                        {log.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{log.action}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-        </Card>
+        <h3 className="text-xl font-semibold font-headline mb-4">
+          Quick Access
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <QuickAccessTile
+            title="Case Management"
+            description="Draft petitions, summarize documents, and manage your cases with AI."
+            icon={Briefcase}
+            href={caseManagementUrl}
+          />
+          <QuickAccessTile
+            title="Case Law Search"
+            description="Explore millions of judgments from Indian courts with RAG-powered search."
+            icon={SearchIcon}
+            href={caseLawSearchUrl}
+          />
+          <QuickAccessTile
+            title="Document Analysis"
+            description="Upload and analyze legal documents for clauses, precedents, and redlines."
+            icon={FileText}
+            href={caseManagementUrl} // Points to the same chat UI
+          />
+        </div>
       </div>
 
+      <div>
+        <h3 className="text-xl font-semibold font-headline mb-4">
+          Recent Activity
+        </h3>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="bg-muted rounded-full p-2">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{activity.action}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {activity.details}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-nowrap">
+                    {activity.time}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
