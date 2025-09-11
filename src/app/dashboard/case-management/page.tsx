@@ -153,13 +153,16 @@ export default function CaseManagementPage() {
     if (!currentInput && !attachedFile && !audioUri) return;
     
     setIsLoading(true);
-    const userMessage: Message = { role: 'user', content: currentInput };
-    // Only add the user message if it's not an implicit transcribe command
-    if (currentInput !== '/transcribe') {
+
+    const isTranscription = currentInput === '/transcribe' && !!audioUri;
+    
+    if (!isTranscription) {
+        const userMessage: Message = { role: 'user', content: currentInput };
         setMessages(prev => [...prev, userMessage]);
     } else {
-        setMessages(prev => [...prev, {role: 'user', content: '[Audio input]'}]);
+        setMessages(prev => [...prev, {role: 'user', content: '[Audio input being transcribed...]' }]);
     }
+    
     setInput('');
     setFile(null);
 
@@ -182,15 +185,26 @@ export default function CaseManagementPage() {
       };
 
       const response = await chat(inputPayload);
-      const modelMessage: Message = { role: 'model', ...response };
 
-      setMessages(prev => [...prev, modelMessage]);
+      if (isTranscription) {
+        // Remove the "[Audio input...]" message
+        setMessages(prev => prev.slice(0, -1));
+        // Execute the transcribed text as a new command
+        await executeTask(response.content);
+      } else {
+        const modelMessage: Message = { role: 'model', ...response };
+        setMessages(prev => [...prev, modelMessage]);
+      }
 
     } catch (error: any) {
       console.error('AI task failed:', error);
       const errorMessage : Message = {
         role: 'model',
         content: 'An error occurred: ' + error.message || 'Failed to complete the request. Please try again later.'
+      }
+       // If it was a transcription, remove the temporary message first
+      if (isTranscription) {
+        setMessages(prev => prev.slice(0, -1));
       }
       setMessages(prev => [...prev, errorMessage]);
       toast({
