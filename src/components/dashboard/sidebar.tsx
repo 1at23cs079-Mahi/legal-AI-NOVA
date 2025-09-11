@@ -19,7 +19,6 @@ import {
   Settings,
   LayoutDashboard,
   Briefcase,
-  Search,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import Link from 'next/link';
@@ -44,8 +43,7 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
-    { href: `/dashboard/case-management?${queryString}`, label: 'Case Management', icon: Briefcase, tooltip: 'Case Management' },
-    { href: `/dashboard/case-law-search?${queryString}`, label: 'Case Law Search', icon: Search, tooltip: 'Case Law Search' },
+    { href: `/dashboard/case-management?${queryString}`, label: 'Nova Legal AI', icon: Briefcase, tooltip: 'Nova Legal AI' },
     { href: `#`, label: 'Database Sources', icon: Database, tooltip: 'Database Sources' },
     { href: '#', label: 'Uploads', icon: Upload, tooltip: 'Uploads' },
     { href: '#', label: 'Users', icon: Users, tooltip: 'Users' },

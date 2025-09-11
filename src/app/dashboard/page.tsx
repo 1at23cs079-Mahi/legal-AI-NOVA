@@ -51,8 +51,7 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const role = searchParams.get('role') || 'user';
   const name = searchParams.get('name') || 'User';
-  const caseManagementUrl = `/dashboard/case-management?${searchParams.toString()}`;
-  const caseLawSearchUrl = `/dashboard/case-law-search?${searchParams.toString()}`;
+  const novaLegalAiUrl = `/dashboard/case-management?${searchParams.toString()}`;
 
   const recentActivities = [
     {
@@ -94,22 +93,16 @@ export default function DashboardPage() {
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <QuickAccessTile
-            title="Case Management"
+            title="Nova Legal AI"
             description="Draft petitions, summarize documents, and manage your cases with AI."
             icon={Briefcase}
-            href={caseManagementUrl}
-          />
-          <QuickAccessTile
-            title="Case Law Search"
-            description="Explore millions of judgments from Indian courts with RAG-powered search."
-            icon={SearchIcon}
-            href={caseLawSearchUrl}
+            href={novaLegalAiUrl}
           />
           <QuickAccessTile
             title="Document Analysis"
             description="Upload and analyze legal documents for clauses, precedents, and redlines."
             icon={FileText}
-            href={`${caseManagementUrl}&command=analyze`}
+            href={`${novaLegalAiUrl}&command=analyze`}
           />
         </div>
       </div>
