@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview An AI agent for searching case law.
+ * @fileOverview An AI agent for searching case law using a RAG model.
  *
  * - searchCaseLaw - A function that handles the case law search process.
  * - SearchCaseLawInput - The input type for the searchCaseLaw function.
@@ -51,7 +51,9 @@ const prompt = ai.definePrompt({
   name: 'searchCaseLawPrompt',
   input: { schema: SearchCaseLawInputSchema },
   output: { schema: SearchCaseLawOutputSchema },
-  prompt: `You are LegalAi, a specialized legal research assistant. Your task is to find relevant case law based on the user's query and filters. You have access to a comprehensive database of Indian case law.
+  prompt: `You are a legal research assistant performing a Retrieval-Augmented Generation (RAG) task.
+  You have already retrieved the most relevant documents from a comprehensive database of Indian case law based on the user's query and filters.
+  Your task is to synthesize these retrieved results into a clear, structured list for the user.
 
   User Query: {{{query}}}
 
@@ -63,7 +65,8 @@ const prompt = ai.definePrompt({
   {{#if filters.subject}}- Subject: {{{filters.subject}}}{{/if}}
   {{/if}}
 
-  Based on the query and filters, return a list of the top 5 most relevant cases. For each case, provide all the required fields. Determine the status of the case (Landmark, Recent, or Overruled) based on its significance and history.
+  Based on the (simulated) retrieved documents, generate a list of the top 5 most relevant cases. For each case, provide all the required fields.
+  Determine the status of the case (Landmark, Recent, or Overruled) based on its significance and history.
   `,
 });
 
@@ -74,10 +77,10 @@ const searchCaseLawFlow = ai.defineFlow(
     outputSchema: SearchCaseLawOutputSchema,
   },
   async (input) => {
-    // In a real application, you would add logic here to query a database
-    // like JUDIS, SCC Online, etc. and then use a RAG model to find the
-    // most relevant results. For this prototype, we will use the LLM to
-    // generate realistic-looking search results.
+    // This flow simulates a RAG model.
+    // In a real application, you would first query a vector database (e.g., Pinecone, Chroma)
+    // to retrieve relevant document chunks, and then pass them to the LLM.
+    // For this prototype, we ask the LLM to generate results as if it has already performed retrieval.
     const { output } = await prompt(input);
     return output!;
   }

@@ -10,14 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { draftLegalPetition, DraftLegalPetitionInput, DraftLegalPetitionOutput } from './draft-legal-petition';
-import { summarizeLegalDocument, SummarizeLegalDocumentInput, SummarizeLegalDocumentOutput } from './summarize-legal-document';
-import { generateCaseTimeline, GenerateCaseTimelineInput, GenerateCaseTimelineOutput } from './generate-case-timeline';
-import { analyzeDocumentAndSuggestEdits, AnalyzeDocumentAndSuggestEditsInput, AnalyzeDocumentAndSuggestEditsOutput } from './analyze-document-and-suggest-edits';
+import { draftLegalPetition, DraftLegalPetitionInput } from './draft-legal-petition';
+import { summarizeLegalDocument, SummarizeLegalDocumentInput } from './summarize-legal-document';
+import { generateCaseTimeline, GenerateCaseTimelineInput } from './generate-case-timeline';
+import { analyzeDocumentAndSuggestEdits, AnalyzeDocumentAndSuggestEditsInput } from './analyze-document-and-suggest-edits';
 import { searchCaseLaw, SearchCaseLawInput, SearchCaseLawOutput } from './search-case-law';
-import { translateText, TranslateTextInput, TranslateTextOutput } from './translate-text';
-import { transcribeAudio, TranscribeAudioInput, TranscribeAudioOutput } from './transcribe-audio';
+import { translateText, TranslateTextInput } from './translate-text';
+import { transcribeAudio, TranscribeAudioInput } from './transcribe-audio';
 
+export type ChatInput = z.infer<typeof ChatInputSchema>;
 const ChatInputSchema = z.object({
   message: z.string().describe('The user message'),
   history: z.array(z.object({
@@ -30,8 +31,8 @@ const ChatInputSchema = z.object({
   documentDataUri: z.string().optional().describe('A document for analysis or summarization, as a data URI.'),
   audioDataUri: z.string().optional().describe('An audio file for transcription, as a data URI.'),
 });
-export type ChatInput = z.infer<typeof ChatInputSchema>;
 
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 const ChatOutputSchema = z.object({
   role: z.literal('model'),
   content: z.string().describe('The model\'s response.'),
@@ -40,7 +41,6 @@ const ChatOutputSchema = z.object({
   timeline: z.string().optional().describe('A timeline of events.'),
   searchResult: z.any().optional().describe('The search result'),
 });
-export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 function getCommand(message: string): { command: string | null; text: string } {
     const commandRegex = /^\/(\w+)\s*(.*)/;
@@ -102,7 +102,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
         break;
     default:
         const { text: chatText } = await ai.generate({
-            prompt: `You are LegalAi. You are a multilingual India-focused AI assistant for legal research, case review, drafting, compliance, and education.
+            prompt: `You are LegalAi, a RAG-based AI assistant. Your responses must be grounded in your fine-tuned knowledge of Indian law and the provided conversation history.
             User role: ${input.userRole}.
             Conversation History:
             ${input.history?.map(h => `${h.role}: ${h.content}`).join('\n') || ''}
