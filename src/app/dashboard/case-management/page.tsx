@@ -125,7 +125,8 @@ export default function CaseManagementPage() {
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
           const base64Audio = reader.result as string;
-          await executeTask(input, undefined, base64Audio);
+          // When recording stops, immediately execute the transcription task.
+          await executeTask('/transcribe', undefined, base64Audio);
         };
       };
 
@@ -153,7 +154,12 @@ export default function CaseManagementPage() {
     
     setIsLoading(true);
     const userMessage: Message = { role: 'user', content: currentInput };
-    setMessages(prev => [...prev, userMessage]);
+    // Only add the user message if it's not an implicit transcribe command
+    if (currentInput !== '/transcribe') {
+        setMessages(prev => [...prev, userMessage]);
+    } else {
+        setMessages(prev => [...prev, {role: 'user', content: '[Audio input]'}]);
+    }
     setInput('');
     setFile(null);
 
