@@ -2,136 +2,100 @@ import { redirect } from 'next/navigation';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons/logo';
-import { Input } from '@/components/ui/input';
+import { Briefcase, BookOpen, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export default function LoginPage() {
-  async function login(formData: FormData) {
-    'use server';
-    const email = formData.get('email');
-    const password = formData.get('password');
+interface RoleCardProps {
+  role: 'advocate' | 'student' | 'public';
+  title: string;
+  description: string;
+  icon: React.ElementType;
+}
 
-    if (email && password) {
-      const role = 'advocate';
-      const mode = 'fast';
-      const name = 'Advocate User';
+export default function LoginPage() {
+
+  async function loginWithRole(formData: FormData) {
+    'use server';
+    const role = formData.get('role') as string;
+    const name = role.charAt(0).toUpperCase() + role.slice(1);
+    const email = `${role}@example.com`;
+
+    if (role) {
       redirect(
-        `/dashboard?role=${role}&mode=${mode}&name=${encodeURIComponent(
+        `/dashboard?role=${role}&name=${encodeURIComponent(
           name
-        )}&email=${encodeURIComponent(email as string)}`
+        )}&email=${encodeURIComponent(email)}`
       );
     }
   }
 
-  async function signInWithGoogle() {
-    'use server';
-    const role = 'advocate';
-    const mode = 'fast';
-    const name = 'Advocate User';
-    const email = 'advocate.demo@gmail.com';
-    redirect(
-      `/dashboard?role=${role}&mode=${mode}&name=${encodeURIComponent(
-        name
-      )}&email=${encodeURIComponent(email)}`
-    );
-  }
+  const RoleCard = ({ role, title, description, icon: Icon }: RoleCardProps) => (
+    <form action={loginWithRole}>
+      <input type="hidden" name="role" value={role} />
+      <button type="submit" className="w-full h-full text-left">
+        <Card className="hover:border-primary hover:bg-muted/30 transition-all duration-200 ease-in-out h-full shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          <CardHeader className="flex-row items-center gap-4">
+            <div className="bg-primary/10 p-4 rounded-full">
+              <Icon className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="font-headline text-xl">{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">{description}</p>
+            <div className="flex items-center text-primary font-semibold">
+              <span>Continue as {title}</span>
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+      </button>
+    </form>
+  );
 
   return (
-    <main className="flex items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-            <Logo iconClassName="size-12 text-primary" textClassName="text-5xl" />
+    <main className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-primary/10">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <Logo iconClassName="size-16 text-primary mx-auto" textClassName="text-6xl" />
+          <p className="mt-4 text-2xl font-headline">
+            Welcome to Your AI-Powered Legal Assistant
+          </p>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Please select your role to get started.
+          </p>
         </div>
-        <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="font-headline text-3xl">
-              Welcome to Lexica
-            </CardTitle>
-            <CardDescription>
-              Your AI-Powered Legal Assistant
-            </CardDescription>
-          </CardHeader>
-          <form action={login}>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email / Bar Council ID</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="advocate@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="#"
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input id="password" name="password" type="password" />
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-              >
-                Login
-              </Button>
-            </CardContent>
-          </form>
-          <CardFooter className="flex-col items-stretch gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            <form action={signInWithGoogle} className="w-full">
-              <Button variant="outline" className="w-full">
-                <svg
-                  className="mr-2 h-4 w-4"
-                  aria-hidden="true"
-                  focusable="false"
-                  data-prefix="fab"
-                  data-icon="google"
-                  role="img"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 488 512"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 76.2C313.6 113.4 283.7 96 248 96c-88.8 0-160 71.3-160 160s71.2 160 160 160c98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"
-                  ></path>
-                </svg>
-                Google
-              </Button>
-            </form>
-            <p className="text-center text-sm text-muted-foreground">
-              New user?{' '}
-              <Link
-                href="/register"
-                className="font-semibold text-primary hover:underline"
-              >
-                Register as Advocate / Student / Public
-              </Link>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <RoleCard 
+                role="advocate"
+                title="Advocate"
+                description="Access powerful tools for case management, legal research, and document drafting."
+                icon={Briefcase}
+            />
+            <RoleCard 
+                role="student"
+                title="Law Student"
+                description="Your study partner for legal research, case summarization, and exam preparation."
+                icon={BookOpen}
+            />
+            <RoleCard 
+                role="public"
+                title="Public User"
+                description="Understand your rights, get information on legal procedures, and ask legal questions."
+                icon={Users}
+            />
+        </div>
+        
+        <div className="text-center mt-12">
+            <p className="text-sm text-muted-foreground">
+                By continuing, you agree to our <Link href="#" className="underline hover:text-primary">Terms of Service</Link> and <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
             </p>
-          </CardFooter>
-        </Card>
+        </div>
       </div>
     </main>
   );

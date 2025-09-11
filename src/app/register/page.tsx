@@ -2,117 +2,100 @@ import { redirect } from 'next/navigation';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons/logo';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Briefcase, BookOpen, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export default function RegisterPage() {
-  async function register(formData: FormData) {
-    'use server';
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password');
-    const role = formData.get('role') as string;
+interface RoleCardProps {
+  role: 'advocate' | 'student' | 'public';
+  title: string;
+  description: string;
+  icon: React.ElementType;
+}
 
-    // In a real application, you would save the user to a database.
-    // For this prototype, we'll just redirect to the dashboard.
-    if (name && email && password && role) {
+export default function LoginPage() {
+
+  async function loginWithRole(formData: FormData) {
+    'use server';
+    const role = formData.get('role') as string;
+    const name = role.charAt(0).toUpperCase() + role.slice(1);
+    const email = `${role}@example.com`;
+
+    if (role) {
       redirect(
-        `/dashboard?role=${role}&mode=fast&name=${encodeURIComponent(
+        `/dashboard?role=${role}&name=${encodeURIComponent(
           name
         )}&email=${encodeURIComponent(email)}`
       );
     }
   }
 
-  return (
-    <main className="flex items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md">
-         <div className="flex justify-center mb-8">
-            <Logo iconClassName="size-12 text-primary" textClassName="text-5xl" />
-        </div>
-        <Card className="shadow-2xl">
-          <form action={register}>
-            <CardHeader className="text-center">
-              <CardTitle className="font-headline text-3xl">
-                Create an Account
-              </CardTitle>
-              <CardDescription>
-                Get started with the future of legal tech.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="advocate@example.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">I am a...</Label>
-                <Select name="role" required>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="advocate">Advocate</SelectItem>
-                    <SelectItem value="student">Law Student</SelectItem>
-                    <SelectItem value="public">Member of the Public</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col items-stretch gap-4">
-              <Button
-                type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-              >
-                Register
-              </Button>
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <Link
-                  href="/"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Login
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
+  const RoleCard = ({ role, title, description, icon: Icon }: RoleCardProps) => (
+    <form action={loginWithRole}>
+      <input type="hidden" name="role" value={role} />
+      <button type="submit" className="w-full h-full text-left">
+        <Card className="hover:border-primary hover:bg-muted/30 transition-all duration-200 ease-in-out h-full shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          <CardHeader className="flex-row items-center gap-4">
+            <div className="bg-primary/10 p-4 rounded-full">
+              <Icon className="w-8 h-8 text-primary" />
+            </div>
+            <CardTitle className="font-headline text-xl">{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">{description}</p>
+            <div className="flex items-center text-primary font-semibold">
+              <span>Continue as {title}</span>
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </div>
+          </CardContent>
         </Card>
+      </button>
+    </form>
+  );
+
+  return (
+    <main className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-primary/10">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <Logo iconClassName="size-16 text-primary mx-auto" textClassName="text-6xl" />
+          <p className="mt-4 text-2xl font-headline">
+            Welcome to Your AI-Powered Legal Assistant
+          </p>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Please select your role to get started.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <RoleCard 
+                role="advocate"
+                title="Advocate"
+                description="Access powerful tools for case management, legal research, and document drafting."
+                icon={Briefcase}
+            />
+            <RoleCard 
+                role="student"
+                title="Law Student"
+                description="Your study partner for legal research, case summarization, and exam preparation."
+                icon={BookOpen}
+            />
+            <RoleCard 
+                role="public"
+                title="Public User"
+                description="Understand your rights, get information on legal procedures, and ask legal questions."
+                icon={Users}
+            />
+        </div>
+        
+        <div className="text-center mt-12">
+            <p className="text-sm text-muted-foreground">
+                By continuing, you agree to our <Link href="#" className="underline hover:text-primary">Terms of Service</Link> and <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
+            </p>
+        </div>
       </div>
     </main>
   );

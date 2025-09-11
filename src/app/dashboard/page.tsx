@@ -12,10 +12,13 @@ import {
   Search as SearchIcon,
   FileText,
   Clock,
-  User,
+  BookOpen,
+  Gavel,
+  Languages
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 type QuickAccessTileProps = {
   title: string;
@@ -47,11 +50,90 @@ function QuickAccessTile({
   );
 }
 
+const roleConfig = {
+    advocate: {
+        welcome: "Welcome back, Advocate!",
+        description: "Your AI-powered legal assistant is ready to help you win your next case.",
+        quickAccess: [
+            {
+                title: "Nova Legal AI",
+                description: "Draft petitions, summarize documents, and manage your cases with AI.",
+                icon: Briefcase,
+                command: ''
+            },
+            {
+                title: "Document Analysis",
+                description: "Upload and analyze legal documents for clauses, precedents, and redlines.",
+                icon: FileText,
+                command: 'analyze'
+            },
+            {
+                title: "Case Law Search",
+                description: "Find relevant case law from our extensive legal database.",
+                icon: Gavel,
+                command: 'search'
+            }
+        ]
+    },
+    student: {
+        welcome: "Welcome, Law Student!",
+        description: "Your AI study partner for acing your exams and moot courts.",
+         quickAccess: [
+            {
+                title: "Nova Legal AI",
+                description: "Understand complex legal concepts, summarize cases, and draft assignments.",
+                icon: BookOpen,
+                command: ''
+            },
+            {
+                title: "Legal Research",
+                description: "Search for case law, statutes, and legal articles for your research.",
+                icon: SearchIcon,
+                command: 'search'
+            },
+            {
+                title: "Translate Legal Text",
+                description: "Translate complex legal text into simpler terms or other languages.",
+                icon: Languages,
+                command: 'translate'
+            },
+        ]
+    },
+    public: {
+        welcome: "Welcome!",
+        description: "Your guide to understanding the Indian legal system.",
+         quickAccess: [
+            {
+                title: "Nova Legal AI",
+                description: "Ask legal questions, understand your rights, and get information on legal procedures.",
+                icon: Briefcase,
+                command: ''
+            },
+            {
+                title: "Legal Terminology",
+                description: "Get simple explanations for complex legal terms.",
+                icon: BookOpen,
+                command: 'explain'
+            },
+            {
+                title: "Public Interest Litigation",
+                description: "Learn how to file a PIL and its procedures.",
+                icon: Gavel,
+                command: 'pil'
+            },
+        ]
+    }
+}
+
+
 export default function DashboardPage() {
   const searchParams = useSearchParams();
-  const role = searchParams.get('role') || 'user';
+  const role = searchParams.get('role') || 'public';
   const name = searchParams.get('name') || 'User';
-  const novaLegalAiUrl = `/dashboard/case-management?${searchParams.toString()}`;
+
+  const { welcome, description, quickAccess } = useMemo(() => {
+    return roleConfig[role as keyof typeof roleConfig] || roleConfig.public;
+  }, [role]);
 
   const recentActivities = [
     {
@@ -69,21 +151,16 @@ export default function DashboardPage() {
       details: 'Lease_Agreement_Final.pdf',
       time: '1 day ago',
     },
-    {
-      action: 'Translated text',
-      details: 'To Hindi',
-      time: '2 days ago',
-    },
   ];
 
   return (
     <div className="flex-1 space-y-8">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">
-          Welcome back, {name}!
+          {welcome.replace('Advocate', name).replace('Student', name)}
         </h2>
         <p className="text-muted-foreground">
-          Your AI-powered legal assistant for India is ready to help.
+          {description}
         </p>
       </div>
 
@@ -92,48 +169,56 @@ export default function DashboardPage() {
           Quick Access
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <QuickAccessTile
-            title="Nova Legal AI"
-            description="Draft petitions, summarize documents, and manage your cases with AI."
-            icon={Briefcase}
-            href={novaLegalAiUrl}
-          />
-          <QuickAccessTile
-            title="Document Analysis"
-            description="Upload and analyze legal documents for clauses, precedents, and redlines."
-            icon={FileText}
-            href={`${novaLegalAiUrl}&command=analyze`}
-          />
+          {quickAccess.map(item => {
+            const search = new URLSearchParams(searchParams.toString());
+            if (item.command) {
+                search.set('command', item.command);
+            } else {
+                search.delete('command');
+            }
+            const href = `/dashboard/case-management?${search.toString()}`
+            return (
+                <QuickAccessTile
+                    key={item.title}
+                    title={item.title}
+                    description={item.description}
+                    icon={item.icon}
+                    href={href}
+                />
+            )
+          })}
         </div>
       </div>
 
-      <div>
-        <h3 className="text-xl font-semibold font-headline mb-4">
-          Recent Activity
-        </h3>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="bg-muted rounded-full p-2">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {activity.details}
+      { (role === 'advocate' || role === 'student') && (
+        <div>
+            <h3 className="text-xl font-semibold font-headline mb-4">
+            Recent Activity
+            </h3>
+            <Card>
+            <CardContent className="pt-6">
+                <div className="space-y-6">
+                {recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-start gap-4">
+                    <div className="bg-muted rounded-full p-2">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-medium">{activity.action}</p>
+                        <p className="text-sm text-muted-foreground">
+                        {activity.details}
+                        </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground whitespace-nowrap">
+                        {activity.time}
                     </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground whitespace-nowrap">
-                    {activity.time}
-                  </p>
+                    </div>
+                ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+            </Card>
+        </div>
+      )}
     </div>
   );
 }
