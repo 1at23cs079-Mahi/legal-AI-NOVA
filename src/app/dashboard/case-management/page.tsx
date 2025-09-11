@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,6 +22,9 @@ import {
   Download,
   Mic,
   Settings,
+  Languages,
+  Square,
+  CheckSquare,
 } from 'lucide-react';
 import {
   Tabs,
@@ -53,9 +56,16 @@ import {
   analyzeDocumentAndSuggestEdits, 
   AnalyzeDocumentAndSuggestEditsInput 
 } from '@/ai/flows/analyze-document-and-suggest-edits';
+import {
+  transcribeAudio,
+  TranscribeAudioInput,
+} from '@/ai/flows/transcribe-audio';
+import {
+  translateText,
+  TranslateTextInput,
+} from '@/ai/flows/translate-text';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type AiTask =
   | 'draft-petition'
@@ -72,6 +82,10 @@ export default function CaseManagementPage() {
   const [inputText, setInputText] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       setFile(event.target.files[0]);
@@ -84,6 +98,58 @@ export default function CaseManagementPage() {
     if (role === 'student') return 'Student';
     return 'Public';
   };
+  
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = event => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          try {
+            setIsLoading(true);
+            const response = await transcribeAudio({ audioDataUri: base64Audio });
+            setInputText(prev => prev + response.transcript);
+          } catch(e) {
+             toast({
+              variant: 'destructive',
+              title: 'Transcription Failed',
+              description: 'Could not transcribe the audio.',
+            });
+          } finally {
+            setIsLoading(false);
+          }
+        };
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Microphone Access Denied',
+        description:
+          'Please enable microphone permissions in your browser settings.',
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
 
   const executeTask = async () => {
     setIsLoading(true);
@@ -141,6 +207,56 @@ export default function CaseManagementPage() {
       setIsLoading(false);
     }
   };
+
+  const handleTranslate = async (targetLanguage: string) => {
+    if (!result) return;
+    setIsLoading(true);
+    try {
+      let textToTranslate = '';
+       switch (activeTab) {
+        case 'draft-petition':
+          textToTranslate = result.draft;
+          break;
+        case 'summarize-document':
+          textToTranslate = result.summary;
+          break;
+        case 'generate-timeline':
+          textToTranslate = result.timeline;
+          break;
+        case 'analyze-document':
+          textToTranslate = result.analysisResults;
+          break;
+      }
+
+      const input: TranslateTextInput = { text: textToTranslate, targetLanguage };
+      const response = await translateText(input);
+
+       switch (activeTab) {
+        case 'draft-petition':
+          setResult({ ...result, draft: response.translatedText });
+          break;
+        case 'summarize-document':
+          setResult({ ...result, summary: response.translatedText });
+          break;
+        case 'generate-timeline':
+          setResult({ ...result, timeline: response.translatedText });
+          break;
+        case 'analyze-document':
+          setResult({ ...result, analysisResults: response.translatedText });
+          break;
+      }
+
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Translation Failed',
+        description: 'Could not translate the text.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   const renderResult = () => {
     if (!result) return null;
@@ -297,7 +413,14 @@ export default function CaseManagementPage() {
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? 'Processing...' : 'Generate'}
               </Button>
-              <Button variant="outline" size="icon"><Mic/></Button>
+               <Button
+                variant="outline"
+                size="icon"
+                onClick={isRecording ? stopRecording : startRecording}
+                className={isRecording ? 'bg-red-500 hover:bg-red-600 text-white' : ''}
+              >
+                {isRecording ? <CheckSquare className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
               <Button variant="outline" size="icon"><Settings/></Button>
           </div>
 
@@ -313,6 +436,20 @@ export default function CaseManagementPage() {
            <CardTitle className="font-headline text-2xl">Output</CardTitle>
            {result && (
             <div className="flex items-center gap-2">
+                <Select onValueChange={handleTranslate}>
+                  <SelectTrigger className="w-auto gap-2">
+                    <Languages className="h-4 w-4" />
+                    <SelectValue placeholder="Translate" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Kannada">Kannada</SelectItem>
+                    <SelectItem value="Tamil">Tamil</SelectItem>
+                    <SelectItem value="Telugu">Telugu</SelectItem>
+                    <SelectItem value="Bengali">Bengali</SelectItem>
+                    <SelectItem value="Marathi">Marathi</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))}><Copy className="h-4 w-4"/></Button>
                 <Button variant="ghost" size="icon"><Download className="h-4 w-4"/></Button>
                 <Button variant="ghost" size="icon"><Share2 className="h-4 w-4"/></Button>

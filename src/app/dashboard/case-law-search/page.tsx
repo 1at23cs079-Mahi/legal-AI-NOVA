@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  FileText,
   Search as SearchIcon,
   Filter,
+  Loader2,
   Book,
-  Scale,
   Landmark,
+  Scale,
 } from 'lucide-react';
 import {
   Table,
@@ -35,51 +35,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-const searchResults = [
-  {
-    id: 1,
-    title: 'Kesavananda Bharati vs. State of Kerala',
-    citation: 'AIR 1973 SC 1461',
-    court: 'Supreme Court of India',
-    date: '24/04/1973',
-    summary:
-      'Established the basic structure doctrine of the Indian Constitution.',
-    status: 'Landmark',
-  },
-  {
-    id: 2,
-    title: 'Maneka Gandhi vs. Union of India',
-    citation: 'AIR 1978 SC 597',
-    court: 'Supreme Court of India',
-    date: '25/01/1978',
-    summary:
-      'Widened the interpretation of Article 21, introducing due process.',
-    status: 'Landmark',
-  },
-  {
-    id: 3,
-    title: 'Shayara Bano vs. Union of India',
-    citation: '(2017) 9 SCC 1',
-    court: 'Supreme Court of India',
-    date: '22/08/2017',
-    summary: 'Declared the practice of Triple Talaq unconstitutional.',
-    status: 'Recent',
-  },
-  {
-    id: 4,
-    title: 'Justice K.S. Puttaswamy (Retd.) vs. Union of India',
-    citation: '(2017) 10 SCC 1',
-    court: 'Supreme Court of India',
-    date: '24/08/2017',
-    summary: 'Affirmed the right to privacy as a fundamental right.',
-    status: 'Landmark',
-  },
-];
+import {
+  searchCaseLaw,
+  SearchCaseLawInput,
+  CaseLaw,
+} from '@/ai/flows/search-case-law';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export default function CaseLawSearchPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    court: '',
+    judge: '',
+    year: '',
+    subject: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<CaseLaw[]>([]);
+
+  const handleSearch = async () => {
+    setIsLoading(true);
+    setResults([]);
+    try {
+      const input: SearchCaseLawInput = {
+        query: searchQuery,
+        filters: {
+          court: filters.court || undefined,
+          judge: filters.judge || undefined,
+          year: filters.year ? parseInt(filters.year) : undefined,
+          subject: filters.subject || undefined,
+        },
+      };
+      const response = await searchCaseLaw(input);
+      setResults(response.results);
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Search Failed',
+        description: 'An error occurred while searching for case law.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFilterChange = (name: string, value: string) => {
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
 
   return (
     <div className="space-y-8">
@@ -103,32 +113,70 @@ export default function CaseLawSearchPage() {
                   className="pl-9"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
                 />
               </div>
-              <Button>
-                <SearchIcon className="mr-2 h-4 w-4" />
+              <Button onClick={handleSearch} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <SearchIcon className="mr-2 h-4 w-4" />
+                )}
                 Search
               </Button>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Court" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sc">Supreme Court</SelectItem>
-                  <SelectItem value="hc">High Courts</SelectItem>
-                  <SelectItem value="tribunals">Tribunals</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input type="text" placeholder="Judge Name" />
-              <Input type="text" placeholder="Year" />
-              <Input type="text" placeholder="Subject" />
-            </div>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="filters">
+                <AccordionTrigger>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Advanced Filters
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+                    <Select
+                      value={filters.court}
+                      onValueChange={value => handleFilterChange('court', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Court" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Supreme Court of India">
+                          Supreme Court
+                        </SelectItem>
+                        <SelectItem value="Delhi High Court">
+                          Delhi High Court
+                        </SelectItem>
+                        <SelectItem value="Bombay High Court">
+                          Bombay High Court
+                        </SelectItem>
+                        <SelectItem value="NCLAT">NCLAT</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="text"
+                      placeholder="Judge Name"
+                      value={filters.judge}
+                      onChange={e => handleFilterChange('judge', e.target.value)}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Year"
+                      value={filters.year}
+                      onChange={e => handleFilterChange('year', e.target.value)}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Subject / Keywords"
+                      value={filters.subject}
+                      onChange={e =>
+                        handleFilterChange('subject', e.target.value)
+                      }
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </CardContent>
       </Card>
@@ -138,41 +186,54 @@ export default function CaseLawSearchPage() {
           <CardTitle>Search Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Case Title & Citation</TableHead>
-                <TableHead>Court</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {searchResults.map(result => (
-                <TableRow key={result.id}>
-                  <TableCell>
-                    <div className="font-medium hover:underline">
-                      <Link href="#">{result.title}</Link>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {result.citation}
-                    </div>
-                  </TableCell>
-                  <TableCell>{result.court}</TableCell>
-                  <TableCell>{result.date}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        result.status === 'Landmark' ? 'default' : 'secondary'
-                      }
-                    >
-                      {result.status}
-                    </Badge>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : results.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Case Title & Citation</TableHead>
+                  <TableHead>Court</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {results.map(result => (
+                  <TableRow key={result.id}>
+                    <TableCell>
+                      <div className="font-medium hover:underline">
+                        <Link href="#">{result.title}</Link>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {result.citation}
+                      </div>
+                    </TableCell>
+                    <TableCell>{result.court}</TableCell>
+                    <TableCell>{result.date}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          result.status === 'Landmark'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                      >
+                        {result.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-16 text-muted-foreground">
+              <Book className="mx-auto h-12 w-12 mb-4" />
+              <p>No results found. Try a different search.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
