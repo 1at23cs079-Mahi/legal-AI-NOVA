@@ -1,5 +1,3 @@
-// Summarize a legal document provided as a data URI.
-
 'use server';
 
 /**

@@ -49,6 +49,10 @@ import {
   generateCaseTimeline,
   GenerateCaseTimelineInput,
 } from '@/ai/flows/generate-case-timeline';
+import { 
+  analyzeDocumentAndSuggestEdits, 
+  AnalyzeDocumentAndSuggestEditsInput 
+} from '@/ai/flows/analyze-document-and-suggest-edits';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -103,6 +107,7 @@ export default function CaseManagementPage() {
             title: 'No file selected',
             description: 'Please upload a document to proceed.',
           });
+          setIsLoading(false);
           return;
         }
         const reader = new FileReader();
@@ -115,9 +120,8 @@ export default function CaseManagementPage() {
           const input: SummarizeLegalDocumentInput = { documentDataUri: dataUri };
           response = await summarizeLegalDocument(input);
         } else {
-          // Placeholder for analyze-document
-          toast({ title: 'Coming Soon!', description: 'Document analysis feature is under development.'})
-          response = { analysisResults: "Document analysis feature is not yet implemented."};
+          const input: AnalyzeDocumentAndSuggestEditsInput = { documentDataUri: dataUri };
+          response = await analyzeDocumentAndSuggestEdits(input);
         }
 
       } else if (activeTab === 'generate-timeline') {
@@ -181,7 +185,7 @@ export default function CaseManagementPage() {
          return (
             <div>
                 <h3 className="text-lg font-semibold mb-2">Analysis Results</h3>
-                <p className="text-sm">{result.analysisResults}</p>
+                <p className="text-sm whitespace-pre-wrap">{result.analysisResults}</p>
             </div>
          )
       default:
