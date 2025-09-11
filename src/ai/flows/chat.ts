@@ -18,7 +18,7 @@ import { searchCaseLaw, SearchCaseLawInput, SearchCaseLawOutput } from './search
 import { translateText, TranslateTextInput, TranslateTextOutput } from './translate-text';
 import { transcribeAudio, TranscribeAudioInput, TranscribeAudioOutput } from './transcribe-audio';
 
-export const ChatInputSchema = z.object({
+const ChatInputSchema = z.object({
   message: z.string().describe('The user message'),
   history: z.array(z.object({
     role: z.enum(['user', 'model']),
@@ -32,7 +32,7 @@ export const ChatInputSchema = z.object({
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-export const ChatOutputSchema = z.object({
+const ChatOutputSchema = z.object({
   role: z.literal('model'),
   content: z.string().describe('The model\'s response.'),
   citations: z.array(z.string()).optional().describe('Relevant citations.'),
