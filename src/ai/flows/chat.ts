@@ -42,58 +42,23 @@ const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-
-const determineTool = ai.defineTool({
-    name: 'determineTool',
-    description: 'Determines which tool to use based on the user query.',
-    inputSchema: z.object({
-      query: z.string(),
-    }),
-    outputSchema: z.object({
-      tool: z.enum(['draft', 'summarize', 'timeline', 'analyze', 'search', 'translate', 'transcribe', 'chat']),
-      reasoning: z.string(),
-    }),
-}, async ({ query }) => {
-    const { output } = await ai.generate({
-        prompt: `You are an expert at determining which tool to use. The user has provided the following query: "${query}".
-
-        Based on the query, choose one of the following tools:
-        - 'draft': For drafting legal petitions, notices, contracts.
-        - 'summarize': For summarizing legal documents.
-        - 'timeline': For generating a case timeline.
-        - 'analyze': For analyzing a document and suggesting edits.
-        - 'search': For searching case law.
-        - 'translate': For translating text.
-        - 'transcribe': For transcribing audio.
-        - 'chat': For all other general legal questions and conversation.
-
-        If the user uses a slash command like /draft, /summarize, etc., you must choose the corresponding tool.
-        `,
-        output: {
-            schema: z.object({
-              tool: z.enum(['draft', 'summarize', 'timeline', 'analyze', 'search', 'translate', 'transcribe', 'chat']),
-              reasoning: z.string(),
-            }),
-        }
-    });
-
-    return output!;
-});
+function getCommand(message: string): { command: string | null; text: string } {
+    const commandRegex = /^\/(\w+)\s*(.*)/;
+    const match = message.match(commandRegex);
+    if (match) {
+        return { command: match[1].toLowerCase(), text: match[2] };
+    }
+    return { command: null, text: message };
+}
 
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const toolChoice = await determineTool({ query: input.message });
-
   let response: Partial<ChatOutput> = {};
+  const { command, text } = getCommand(input.message);
 
-  const commandRegex = /^\/(\w+)\s*(.*)/;
-  const match = input.message.match(commandRegex);
-  const queryText = match ? match[2] : input.message;
-
-
-  switch (toolChoice.tool) {
+  switch (command) {
     case 'draft':
-      const draftInput: DraftLegalPetitionInput = { query: queryText, userRole: input.userRole };
+      const draftInput: DraftLegalPetitionInput = { query: text, userRole: input.userRole };
       const draftOutput = await draftLegalPetition(draftInput);
       response = { content: draftOutput.draft, citations: draftOutput.citations };
       break;
@@ -104,7 +69,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
       response = { content: summarizeOutput.summary, citations: summarizeOutput.citations };
       break;
     case 'timeline':
-      const timelineInput: GenerateCaseTimelineInput = { caseDetails: queryText };
+      const timelineInput: GenerateCaseTimelineInput = { caseDetails: text };
       const timelineOutput = await generateCaseTimeline(timelineInput);
       response = { content: timelineOutput.timeline, timeline: timelineOutput.timeline };
       break;
@@ -115,16 +80,16 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
       response = { content: analyzeOutput.analysisResults, analysisResults: analyzeOutput.analysisResults };
       break;
     case 'search':
-        const searchInput: SearchCaseLawInput = { query: queryText };
+        const searchInput: SearchCaseLawInput = { query: text };
         const searchOutput = await searchCaseLaw(searchInput);
         response = { content: `Found ${searchOutput.results.length} cases.`, searchResult: searchOutput };
         break;
     case 'translate':
-        const translateRegex = /\/(translate)\s*(to\s*)?(\w+)\s*(.*)/i;
-        const translateMatch = input.message.match(translateRegex);
+        const translateRegex = /^(to\s*)?(\w+)\s*(.*)/i;
+        const translateMatch = text.match(translateRegex);
         if(!translateMatch) throw new Error('Invalid translate command. Use /translate to <language> <text>');
-        const targetLanguage = translateMatch[3];
-        const textToTranslate = translateMatch[4];
+        const targetLanguage = translateMatch[2];
+        const textToTranslate = translateMatch[3];
         const translateInput: TranslateTextInput = { text: textToTranslate, targetLanguage };
         const translateOutput = await translateText(translateInput);
         response = { content: translateOutput.translatedText };
@@ -136,7 +101,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
         response = { content: transcribeOutput.transcript };
         break;
     default:
-        const { text } = await ai.generate({
+        const { text: chatText } = await ai.generate({
             prompt: `You are LegalAi. You are a multilingual India-focused AI assistant for legal research, case review, drafting, compliance, and education.
             User role: ${input.userRole}.
             Conversation History:
@@ -144,7 +109,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
             User: ${input.message}
             LegalAi:`,
         });
-        response = { content: text };
+        response = { content: chatText };
   }
 
   return { role: 'model', ...response, content: response.content || "Sorry, I couldn't process that request." };
