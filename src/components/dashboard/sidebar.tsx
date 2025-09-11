@@ -18,6 +18,7 @@ import {
   LogOut,
   Settings,
   LayoutDashboard,
+  Briefcase,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import Link from 'next/link';
@@ -38,6 +39,7 @@ export function DashboardSidebar() {
 
   const menuItems = [
     { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
+    { href: `/dashboard/case-management?${queryString}`, label: 'Case Management', icon: Briefcase, tooltip: 'Case Management' },
     { href: `#`, label: 'Database Sources', icon: Database, tooltip: 'Database Sources' },
     { href: '#', label: 'Uploads', icon: Upload, tooltip: 'Uploads' },
     { href: '#', label: 'Users', icon: Users, tooltip: 'Users' },
@@ -55,7 +57,7 @@ export function DashboardSidebar() {
           <SidebarMenuItem key={item.label}>
             <SidebarMenuButton
               asChild
-              isActive={pathname === item.href.split('?')[0] && item.label === 'Dashboard'}
+              isActive={pathname === item.href.split('?')[0]}
               tooltip={{ children: item.tooltip, side: 'right' }}
             >
               <Link href={item.href}>
