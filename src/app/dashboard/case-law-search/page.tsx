@@ -15,8 +15,6 @@ import {
   Filter,
   Loader2,
   Book,
-  Landmark,
-  Scale,
 } from 'lucide-react';
 import {
   Table,
@@ -128,8 +126,10 @@ export default function CaseLawSearchPage() {
             <Accordion type="single" collapsible>
               <AccordionItem value="filters">
                 <AccordionTrigger>
-                  <Filter className="mr-2 h-4 w-4" />
-                  Advanced Filters
+                  <div className="flex items-center">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Advanced Filters
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
@@ -204,7 +204,7 @@ export default function CaseLawSearchPage() {
                 {results.map(result => (
                   <TableRow key={result.id}>
                     <TableCell>
-                      <div className="font-medium hover:underline">
+                      <div className="font-medium hover:underline text-primary">
                         <Link href="#">{result.title}</Link>
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -218,8 +218,9 @@ export default function CaseLawSearchPage() {
                         variant={
                           result.status === 'Landmark'
                             ? 'default'
-                            : 'secondary'
+                            : result.status === 'Overruled' ? 'destructive' : 'secondary'
                         }
+                        className={result.status === 'Landmark' ? 'bg-accent text-accent-foreground' : ''}
                       >
                         {result.status}
                       </Badge>

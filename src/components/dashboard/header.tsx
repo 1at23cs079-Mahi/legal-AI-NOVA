@@ -53,9 +53,9 @@ export function DashboardHeader() {
                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
                   <Badge
                     variant="secondary"
-                    className="cursor-help bg-accent/20 border-accent/50"
+                    className="cursor-help bg-accent/20 border border-accent/50 text-accent-foreground"
                   >
-                    <Sparkles className="mr-1 h-3 w-3 text-primary/80" />
+                    <Sparkles className="mr-1 h-3 w-3 text-accent" />
                     RAG
                   </Badge>
                 </div>
@@ -70,13 +70,13 @@ export function DashboardHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-              <Avatar className="h-9 w-9">
+              <Avatar className="h-9 w-9 border-2 border-primary/50">
                 <AvatarImage
                   src={`https://picsum.photos/seed/${email}/40/40`}
                   alt={name}
                   data-ai-hint="professional headshot"
                 />
-                <AvatarFallback>{initial}</AvatarFallback>
+                <AvatarFallback className="bg-primary/20 text-primary">{initial}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

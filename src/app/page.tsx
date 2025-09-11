@@ -22,17 +22,17 @@ export default function LoginPage() {
     if (email && password) {
       const role = 'advocate';
       const mode = 'fast';
+      const name = 'Advocate User';
       redirect(
-        `/dashboard?role=${role}&mode=${mode}&name=Demo&email=${email}`
+        `/dashboard?role=${role}&mode=${mode}&name=${encodeURIComponent(
+          name
+        )}&email=${encodeURIComponent(email as string)}`
       );
     }
   }
 
   async function signInWithGoogle() {
     'use server';
-    // In a real app, this would involve NextAuth.js or Firebase Auth
-    // to get the user's profile from Google.
-    // For this prototype, we'll simulate a successful login and redirect.
     const role = 'advocate';
     const mode = 'fast';
     const name = 'Advocate User';
@@ -45,22 +45,18 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#0A2540] to-[#1D4ED8] text-white p-8">
-        <Logo iconClassName="size-20" textClassName="text-7xl" />
-        <p className="text-lg text-center max-w-sm">
-          A multilingual, India-focused AI assistant for legal research, case
-          review, drafting, compliance, and education.
-        </p>
-      </div>
-      <div className="flex items-center justify-center p-8 bg-background">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl">
-              Welcome back to LegalAi
+    <main className="flex items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md">
+        <div className="flex justify-center mb-8">
+            <Logo iconClassName="size-12 text-primary" textClassName="text-5xl" />
+        </div>
+        <Card className="shadow-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="font-headline text-3xl">
+              Welcome to Lexica
             </CardTitle>
             <CardDescription>
-              Enter your credentials to access your account.
+              Your AI-Powered Legal Assistant
             </CardDescription>
           </CardHeader>
           <form action={login}>
@@ -88,7 +84,7 @@ export default function LoginPage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               >
                 Login
               </Button>

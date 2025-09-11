@@ -40,18 +40,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#0A2540] to-[#1D4ED8] text-white p-8">
-        <Logo iconClassName="size-20" textClassName="text-7xl" />
-        <p className="text-lg text-center max-w-sm">
-          Join LegalAi and revolutionize your legal workflow.
-        </p>
-      </div>
-      <div className="flex items-center justify-center p-8 bg-background">
-        <Card className="w-full max-w-md shadow-2xl">
+    <main className="flex items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md">
+         <div className="flex justify-center mb-8">
+            <Logo iconClassName="size-12 text-primary" textClassName="text-5xl" />
+        </div>
+        <Card className="shadow-2xl">
           <form action={register}>
-            <CardHeader>
-              <CardTitle className="font-headline text-2xl">
+            <CardHeader className="text-center">
+              <CardTitle className="font-headline text-3xl">
                 Create an Account
               </CardTitle>
               <CardDescription>
@@ -100,7 +97,7 @@ export default function RegisterPage() {
             <CardFooter className="flex-col items-stretch gap-4">
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               >
                 Register
               </Button>

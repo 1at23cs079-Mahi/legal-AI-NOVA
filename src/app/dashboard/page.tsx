@@ -31,15 +31,13 @@ function QuickAccessTile({
   href,
 }: QuickAccessTileProps) {
   return (
-    <Link href={href} className="block hover:bg-muted/50 rounded-lg">
-      <Card className="h-full transition-all border-border hover:border-primary">
-        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+    <Link href={href} className="block hover:bg-muted/50 rounded-lg transition-all">
+      <Card className="h-full border-2 border-transparent hover:border-primary/50 hover:shadow-lg">
+        <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
           <div className="bg-primary/10 p-3 rounded-full">
             <Icon className="h-6 w-6 text-primary" />
           </div>
-          <div>
-            <CardTitle className="text-lg font-headline">{title}</CardTitle>
-          </div>
+          <CardTitle className="text-lg font-headline">{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{description}</p>
@@ -52,6 +50,7 @@ function QuickAccessTile({
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const role = searchParams.get('role') || 'user';
+  const name = searchParams.get('name') || 'User';
   const caseManagementUrl = `/dashboard/case-management?${searchParams.toString()}`;
   const caseLawSearchUrl = `/dashboard/case-law-search?${searchParams.toString()}`;
 
@@ -82,7 +81,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-8">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">
-          Welcome to LegalAi, {role.charAt(0).toUpperCase() + role.slice(1)}
+          Welcome back, {name}!
         </h2>
         <p className="text-muted-foreground">
           Your AI-powered legal assistant for India is ready to help.
@@ -110,7 +109,7 @@ export default function DashboardPage() {
             title="Document Analysis"
             description="Upload and analyze legal documents for clauses, precedents, and redlines."
             icon={FileText}
-            href={caseManagementUrl} // Points to the same chat UI
+            href={`${caseManagementUrl}&command=analyze`}
           />
         </div>
       </div>

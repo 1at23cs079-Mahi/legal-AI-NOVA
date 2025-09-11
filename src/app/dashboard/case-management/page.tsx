@@ -5,23 +5,13 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
   FileText,
-  History,
-  Scale,
-  FileUp,
   Loader2,
-  Share2,
   Copy,
-  Download,
   Mic,
-  Settings,
-  Languages,
   Paperclip,
   X,
   Send,
@@ -31,14 +21,13 @@ import {
 import { 
   chat, 
   ChatInput,
-  ChatOutput,
 } from '@/ai/flows/chat';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/icons/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CommandMenu } from '@/components/dashboard/command-menu';
-import { CaseLaw, SearchCaseLawOutput } from '@/ai/flows/search-case-law';
+import { SearchCaseLawOutput } from '@/ai/flows/search-case-law';
 import {
   Table,
   TableBody,
@@ -49,6 +38,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Scale } from 'lucide-react';
 
 type Message = {
   role: 'user' | 'model';
@@ -88,14 +78,14 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
   return (
     <div className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
       {message.role === 'model' && (
-        <Avatar className="w-8 h-8 border">
-          <AvatarFallback><Scale className="w-4 h-4"/></AvatarFallback>
+        <Avatar className="w-8 h-8 border-2 border-primary/50">
+          <AvatarFallback className="bg-primary/20"><Scale className="w-4 h-4 text-primary"/></AvatarFallback>
         </Avatar>
       )}
-      <div className={`max-w-2xl rounded-lg px-4 py-3 ${
+      <div className={`max-w-2xl rounded-lg px-4 py-3 shadow-sm ${
         message.role === 'user'
           ? 'bg-primary text-primary-foreground'
-          : 'bg-muted'
+          : 'bg-card'
       }`}>
         <div className="prose prose-sm max-w-none text-sm text-foreground">
           {renderContent(message)}
@@ -136,6 +126,13 @@ export default function CaseManagementPage() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    const command = searchParams.get('command');
+    if(command) {
+      setInput(`/${command}`);
+    }
+  }, [searchParams])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -293,7 +290,7 @@ export default function CaseManagementPage() {
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <Logo iconClassName="size-16" textClassName="text-5xl" />
+            <Logo iconClassName="size-16 text-primary" textClassName="text-5xl" />
             <p className="mt-4 text-muted-foreground">How can I help you today?</p>
           </div>
         ) : (
@@ -303,8 +300,8 @@ export default function CaseManagementPage() {
             ))}
              {isLoading && (
               <div className="flex items-start gap-4">
-                <Avatar className="w-8 h-8 border">
-                  <AvatarFallback><Scale className="w-4 h-4" /></AvatarFallback>
+                <Avatar className="w-8 h-8 border-2 border-primary/50">
+                  <AvatarFallback className="bg-primary/20"><Scale className="w-4 h-4 text-primary" /></AvatarFallback>
                 </Avatar>
                 <div className="max-w-2xl rounded-lg px-4 py-3 bg-muted flex items-center">
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -319,7 +316,7 @@ export default function CaseManagementPage() {
         <form onSubmit={handleFormSubmit} className="relative">
           <CommandMenu input={input} setInput={setInput} />
           <Textarea
-            placeholder="Ask LegalAi anything... or type '/' for commands"
+            placeholder="Ask Lexica anything... or type '/' for commands"
             className="pr-28 pl-10 min-h-[48px] resize-none"
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -332,7 +329,7 @@ export default function CaseManagementPage() {
           />
           <div className="absolute top-1/2 -translate-y-1/2 left-3 flex items-center">
              <label htmlFor="file-upload">
-              <Paperclip className="h-5 w-5 text-muted-foreground cursor-pointer" />
+              <Paperclip className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary" />
             </label>
             <input id="file-upload" type="file" className="hidden" onChange={handleFileChange}/>
           </div>
@@ -386,7 +383,7 @@ function SearchResultTable({ result }: { result: SearchCaseLawOutput }) {
                 {result.results.map(res => (
                 <TableRow key={res.id}>
                     <TableCell>
-                    <div className="font-medium hover:underline">
+                    <div className="font-medium hover:underline text-primary">
                         <Link href="#">{res.title}</Link>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -400,8 +397,9 @@ function SearchResultTable({ result }: { result: SearchCaseLawOutput }) {
                         variant={
                         res.status === 'Landmark'
                             ? 'default'
-                            : 'secondary'
+                            : res.status === 'Overruled' ? 'destructive' : 'secondary'
                         }
+                        className={res.status === 'Landmark' ? 'bg-accent text-accent-foreground' : ''}
                     >
                         {res.status}
                     </Badge>

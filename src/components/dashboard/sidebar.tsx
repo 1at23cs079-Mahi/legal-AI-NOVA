@@ -31,10 +31,14 @@ export function DashboardSidebar() {
 
   const role = searchParams.get('role');
   const mode = searchParams.get('mode');
+  const name = searchParams.get('name');
+  const email = searchParams.get('email');
 
   const preservedSearchParams = new URLSearchParams();
   if (role) preservedSearchParams.set('role', role);
   if (mode) preservedSearchParams.set('mode', mode);
+  if (name) preservedSearchParams.set('name', name);
+  if (email) preservedSearchParams.set('email', email);
   const queryString = preservedSearchParams.toString();
 
 
