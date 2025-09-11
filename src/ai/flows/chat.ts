@@ -46,7 +46,7 @@ function getCommand(message: string): { command: string | null; text: string } {
     const commandRegex = /^\/(\w+)\s*(.*)/;
     const match = message.match(commandRegex);
     if (match) {
-        return { command: match[1].toLowerCase(), text: match[2] };
+        return { command: match[1].toLowerCase(), text: match[2].trim() };
     }
     return { command: null, text: message };
 }
