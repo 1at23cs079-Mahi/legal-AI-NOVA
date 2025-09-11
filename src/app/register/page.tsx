@@ -23,25 +23,26 @@ import Link from 'next/link';
 export default function RegisterPage() {
   async function register(formData: FormData) {
     'use server';
-    const name = formData.get('name');
-    const email = formData.get('email');
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
     const password = formData.get('password');
-    const role = formData.get('role');
+    const role = formData.get('role') as string;
 
     // In a real application, you would save the user to a database.
     // For this prototype, we'll just redirect to the dashboard.
     if (name && email && password && role) {
-      redirect(`/dashboard?role=${role}&mode=fast`);
+      redirect(
+        `/dashboard?role=${role}&mode=fast&name=${encodeURIComponent(
+          name
+        )}&email=${encodeURIComponent(email)}`
+      );
     }
   }
 
   return (
     <main className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       <div className="hidden lg:flex flex-col items-center justify-center gap-8 bg-gradient-to-br from-[#0A2540] to-[#1D4ED8] text-white p-8">
-        <Logo
-          iconClassName="size-20"
-          textClassName="text-7xl"
-        />
+        <Logo iconClassName="size-20" textClassName="text-7xl" />
         <p className="text-lg text-center max-w-sm">
           Join LegalAi and revolutionize your legal workflow.
         </p>
@@ -50,7 +51,9 @@ export default function RegisterPage() {
         <Card className="w-full max-w-md shadow-2xl">
           <form action={register}>
             <CardHeader>
-              <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
+              <CardTitle className="font-headline text-2xl">
+                Create an Account
+              </CardTitle>
               <CardDescription>
                 Get started with the future of legal tech.
               </CardDescription>
@@ -82,25 +85,31 @@ export default function RegisterPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">I am a...</Label>
-                 <Select name="role" required>
-                    <SelectTrigger id="role">
-                        <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="advocate">Advocate</SelectItem>
-                        <SelectItem value="student">Law Student</SelectItem>
-                        <SelectItem value="public">Member of the Public</SelectItem>
-                    </SelectContent>
+                <Select name="role" required>
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="advocate">Advocate</SelectItem>
+                    <SelectItem value="student">Law Student</SelectItem>
+                    <SelectItem value="public">Member of the Public</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </CardContent>
             <CardFooter className="flex-col items-stretch gap-4">
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90"
+              >
                 Register
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/" className="font-semibold text-primary hover:underline">
+                <Link
+                  href="/"
+                  className="font-semibold text-primary hover:underline"
+                >
                   Login
                 </Link>
               </p>
