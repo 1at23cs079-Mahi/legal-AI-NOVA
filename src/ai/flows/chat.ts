@@ -59,17 +59,6 @@ const legalSearch = ai.defineTool(
     }
 );
 
-const chatPrompt = ai.definePrompt({
-    name: 'ragChatPrompt',
-    tools: [legalSearch],
-    system: `You are LegalAi, a RAG-based AI assistant. Your responses must be grounded in the information provided by the 'legalSearch' tool.
-    Never invent information. If the tool does not provide an answer, state that you don't have enough information.
-    Always cite the sources of your information from the tool's output.
-    User role: {{{userRole}}}
-    `,
-});
-
-
 export const chat = ai.defineFlow(
   {
     name: 'chatFlow',
@@ -79,13 +68,14 @@ export const chat = ai.defineFlow(
   async (input) => {
     const { text } = await ai.generate({
         model: 'googleai/gemini-2.5-flash',
-        prompt: {
-            ...chatPrompt,
-            messages: [
-                ...(input.history || []),
-                { role: 'user', content: [{ text: input.message }] },
-            ]
-        },
+        system: `You are LegalAi, a RAG-based AI assistant. Your responses must be grounded in the information provided by the 'legalSearch' tool.
+    Never invent information. If the tool does not provide an answer, state that you don't have enough information.
+    Always cite the sources of your information from the tool's output.
+    User role: ${input.userRole}
+    `,
+        tools: [legalSearch],
+        history: input.history,
+        prompt: input.message,
     });
 
     return {
