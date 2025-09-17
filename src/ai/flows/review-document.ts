@@ -43,7 +43,7 @@ const reviewDocumentPrompt = ai.definePrompt({
   output: {schema: ReviewDocumentOutputSchema},
   prompt: `You are a legal expert specializing in reviewing and analyzing legal documents.
 You will be given a document and a prompt from a user instructing you what to do.
-Execute the user's instruction on the provided document.
+Execute the user's instruction on the provided document and present your findings in a clear, point-wise format.
 
 Document: {{media url=documentDataUri}}
 User's Instruction: {{{prompt}}}
