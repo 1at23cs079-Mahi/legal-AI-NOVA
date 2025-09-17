@@ -43,7 +43,7 @@ export function DashboardSidebar() {
   const allMenuItems = {
     advocate: [
         { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
-        { href: `/dashboard/case-management?${queryString}`, label: 'LegalAI', icon: Briefcase, tooltip: 'LegalAI' },
+        { href: `/dashboard/case-management?${queryString}`, label: 'Case Management', icon: Briefcase, tooltip: 'Case Management' },
         { href: `#`, label: 'Database Sources', icon: Database, tooltip: 'Database Sources' },
         { href: '#', label: 'Uploads', icon: Upload, tooltip: 'Uploads' },
         { href: '#', label: 'Analytics', icon: LineChart, tooltip: 'Analytics' },

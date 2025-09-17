@@ -10,9 +10,7 @@ interface CommandMenuProps {
 
 const commands = [
     { name: 'draft', description: 'Draft a legal petition...', icon: <FileText className="h-4 w-4"/>, example: '/draft a petition for...' },
-    { name: 'summarize', description: 'Summarize the attached document', icon: <Scale className="h-4 w-4"/>, example: '/summarize' },
     { name: 'timeline', description: 'Generate a case timeline for...', icon: <History className="h-4 w-4"/>, example: '/timeline about...' },
-    { name: 'analyze', description: 'Analyze the attached document', icon: <Scale className="h-4 w-4"/>, example: '/analyze' },
     { name: 'search', description: 'Search for case law about...', icon: <Search className="h-4 w-4"/>, example: '/search for cases on...' },
     { name: 'translate', description: 'Translate text to another language', icon: <Languages className="h-4 w-4"/>, example: '/translate to Hindi Hello World' },
     { name: 'transcribe', description: 'Transcribe an attached audio file', icon: <Mic className="h-4 w-4"/>, example: '/transcribe' },
