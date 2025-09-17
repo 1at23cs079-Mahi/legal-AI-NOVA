@@ -21,12 +21,18 @@ import {
   chat, 
   ChatInput,
 } from '@/ai/flows/chat';
+import { summarizeLegalDocument } from '@/ai/flows/summarize-legal-document';
+import { analyzeDocumentAndSuggestEdits } from '@/ai/flows/analyze-document-and-suggest-edits';
+import { draftLegalPetition } from '@/ai/flows/draft-legal-petition';
+import { generateCaseTimeline } from '@/ai/flows/generate-case-timeline';
+import { searchCaseLaw, SearchCaseLawOutput } from '@/ai/flows/search-case-law';
+import { translateText } from '@/ai/flows/translate-text';
+import { transcribeAudio } from '@/ai/flows/transcribe-audio';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 import { Logo } from '@/components/icons/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CommandMenu } from '@/components/dashboard/command-menu';
-import { SearchCaseLawOutput } from '@/ai/flows/search-case-law';
 import {
   Table,
   TableBody,
@@ -234,8 +240,16 @@ export default function CaseManagementPage() {
       setIsRecording(false);
     }
   };
+  
+  const getCommand = (input: string): { command: string, query: string } | null => {
+    const match = input.match(/^\/(\w+)\s*(.*)/);
+    if (match) {
+        return { command: match[1], query: match[2].trim() };
+    }
+    return null;
+  }
 
-  const executeTask = async (currentInput: string, attachedFile?: File, audioUri?: string) => {
+  const executeTask = async (currentInput: string, attachedFile?: File | null, audioUri?: string) => {
     if (!currentInput && !attachedFile && !audioUri) return;
     
     setIsLoading(true);
@@ -247,25 +261,74 @@ export default function CaseManagementPage() {
     setFile(null);
 
     try {
-      let dataUri: string | undefined;
+      const commandInfo = getCommand(currentInput);
+      let dataUri: string | undefined = audioUri;
+
       if (attachedFile) {
-        const reader = new FileReader();
-        reader.readAsDataURL(attachedFile);
         dataUri = await new Promise<string>(resolve => {
+          const reader = new FileReader();
           reader.onload = e => resolve(e.target?.result as string);
+          reader.readAsDataURL(attachedFile);
         });
       }
+      
+      let response: any;
 
-      const inputPayload: ChatInput = {
-        message: currentInput,
-        history: messages.map(m => ({
-          role: m.role,
-          content: [{ text: m.content }],
-        })),
-        userRole: getRole(),
-      };
+      if (commandInfo) {
+        const { command, query } = commandInfo;
+        const userRole = getRole();
 
-      const response = await chat(inputPayload);
+        switch(command) {
+          case 'summarize':
+            if (!dataUri) throw new Error('Please attach a document to summarize.');
+            response = await summarizeLegalDocument({ documentDataUri: dataUri });
+            response.content = response.summary;
+            break;
+          case 'analyze':
+            if (!dataUri) throw new Error('Please attach a document to analyze.');
+            response = await analyzeDocumentAndSuggestEdits({ documentDataUri: dataUri });
+            response.content = response.analysisResults;
+            break;
+          case 'draft':
+            response = await draftLegalPetition({ query, userRole });
+            response.content = response.draft;
+            break;
+          case 'timeline':
+            response = await generateCaseTimeline({ caseDetails: query });
+            response.content = response.timeline;
+            break;
+          case 'search':
+            response = await searchCaseLaw({ query });
+            response.content = `Searching for: "${query}"`; // Placeholder text
+            response.searchResult = response;
+            break;
+          case 'translate':
+            const [targetLanguage, ...textToTranslate] = query.split(' ');
+            if (!targetLanguage || textToTranslate.length === 0) {
+              throw new Error('Usage: /translate <language> <text>');
+            }
+            response = await translateText({ targetLanguage, text: textToTranslate.join(' ') });
+            response.content = response.translatedText;
+            break;
+          case 'transcribe':
+             if (!dataUri) throw new Error('Please attach an audio file or record audio to transcribe.');
+             response = await transcribeAudio({ audioDataUri: dataUri });
+             response.content = response.transcript;
+             break;
+          default:
+             throw new Error(`Unknown command: /${command}`);
+        }
+      } else {
+         const inputPayload: ChatInput = {
+          message: currentInput,
+          history: messages.map(m => ({
+            role: m.role,
+            content: [{ text: m.content }],
+          })),
+          userRole: getRole(),
+        };
+        response = await chat(inputPayload);
+      }
 
       const modelMessage: Message = { role: 'model', ...response };
       setMessages(prev => [...prev, modelMessage]);
