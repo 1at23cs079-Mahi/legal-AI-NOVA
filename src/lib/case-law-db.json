@@ -61,14 +61,44 @@
       "subject": "Constitutional Law"
     },
     {
-        "id": 7,
-        "title": "Gurbaksh Singh Sibbia vs. State of Punjab",
-        "citation": "(1980) 2 SCC 565",
-        "court": "Supreme Court of India",
-        "date": "09/04/1980",
-        "summary": "This case extensively dealt with the principles governing the grant of anticipatory bail under Section 438 of the Code of Criminal Procedure (CrPC). The court emphasized that the discretion to grant anticipatory bail should be exercised with care and not in a blanket manner, balancing the individual's right to liberty with the interests of justice and the need for investigation.",
-        "status": "Landmark",
-        "subject": "Criminal Law"
+      "id": 7,
+      "title": "Gurbaksh Singh Sibbia vs. State of Punjab",
+      "citation": "(1980) 2 SCC 565",
+      "court": "Supreme Court of India",
+      "date": "09/04/1980",
+      "summary": "This case extensively dealt with the principles governing the grant of anticipatory bail under Section 438 of the Code of Criminal Procedure (CrPC). The court emphasized that the discretion to grant anticipatory bail should be exercised with care and not in a blanket manner, balancing the individual's right to liberty with the interests of justice and the need for investigation.",
+      "status": "Landmark",
+      "subject": "Criminal Law"
+    },
+    {
+      "id": 8,
+      "title": "Justice K.S. Puttaswamy (Retd.) vs. Union of India",
+      "citation": "(2017) 10 SCC 1",
+      "court": "Supreme Court of India",
+      "date": "24/08/2017",
+      "summary": "A nine-judge bench unanimously held that the Right to Privacy is a fundamental right under the Indian Constitution, protected under Article 21 (Right to Life and Personal Liberty). This judgment has wide-ranging implications for data protection and individual freedoms.",
+      "status": "Landmark",
+      "subject": "Constitutional Law"
+    },
+    {
+      "id": 9,
+      "title": "Joseph Shine vs. Union of India",
+      "citation": "AIR 2018 SC 4898",
+      "court": "Supreme Court of India",
+      "date": "27/09/2018",
+      "summary": "The Supreme Court struck down the 158-year-old Section 497 of the Indian Penal Code, which criminalized adultery. The court declared the law unconstitutional, stating that it treated women as property of their husbands and violated their dignity.",
+      "status": "Recent",
+      "subject": "Constitutional Law"
+    },
+    {
+      "id": 10,
+      "title": "A. K. Gopalan vs. State of Madras",
+      "citation": "AIR 1950 SC 27",
+      "court": "Supreme Court of India",
+      "date": "19/05/1950",
+      "summary": "One of the earliest cases that dealt with fundamental rights. The Supreme Court took a narrow view of Article 21, holding that 'procedure established by law' meant any procedure laid down by the legislature. This interpretation was later overturned in the Maneka Gandhi case.",
+      "status": "Overruled",
+      "subject": "Constitutional Law"
     }
   ]
 }
