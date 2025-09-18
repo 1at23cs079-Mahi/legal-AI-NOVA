@@ -10,6 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { searchCaseLawDatabase } from '@/services/legal-search';
 
 const SearchCaseLawInputSchema = z.object({
   query: z.string().describe('The search query for case law.'),
@@ -47,29 +48,6 @@ export async function searchCaseLaw(
   return searchCaseLawFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'searchCaseLawPrompt',
-  input: { schema: SearchCaseLawInputSchema },
-  output: { schema: SearchCaseLawOutputSchema },
-  prompt: `You are a legal research assistant performing a Retrieval-Augmented Generation (RAG) task.
-  You have already retrieved the most relevant documents from a comprehensive database of Indian case law based on the user's query and filters.
-  Your task is to synthesize these retrieved results into a clear, structured list for the user.
-
-  User Query: {{{query}}}
-
-  {{#if filters}}
-  Filters:
-  {{#if filters.court}}- Court: {{{filters.court}}}{{/if}}
-  {{#if filters.judge}}- Judge: {{{filters.judge}}}{{/if}}
-  {{#if filters.year}}- Year: {{{filters.year}}}{{/if}}
-  {{#if filters.subject}}- Subject: {{{filters.subject}}}{{/if}}
-  {{/if}}
-
-  Based on the (simulated) retrieved documents, generate a list of the top 5 most relevant cases. For each case, provide all the required fields.
-  Determine the status of the case (Landmark, Recent, or Overruled) based on its significance and history.
-  `,
-});
-
 const searchCaseLawFlow = ai.defineFlow(
   {
     name: 'searchCaseLawFlow',
@@ -78,10 +56,15 @@ const searchCaseLawFlow = ai.defineFlow(
   },
   async (input) => {
     // This flow simulates a RAG model.
-    // In a real application, you would first query a vector database (e.g., Pinecone, Chroma)
-    // to retrieve relevant document chunks, and then pass them to the LLM.
-    // For this prototype, we ask the LLM to generate results as if it has already performed retrieval.
-    const { output } = await prompt(input);
-    return output!;
+    // 1. Retrieve relevant documents from our "database".
+    const searchResults = await searchCaseLawDatabase(input.query, input.filters);
+
+    // 2. If we have results, we can just return them directly.
+    // An alternative approach would be to pass the results to an LLM
+    // to synthesize a summary or answer, but for a structured search
+    // result, returning the data directly is often better.
+    return {
+      results: searchResults,
+    };
   }
 );

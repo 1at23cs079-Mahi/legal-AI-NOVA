@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "title": "Kesavananda Bharati vs. State of Kerala",
+      "citation": "AIR 1973 SC 1461",
+      "court": "Supreme Court of India",
+      "date": "24/04/1973",
+      "summary": "This landmark case established the 'basic structure' doctrine of the Indian Constitution, which rules that the Parliament's power to amend the Constitution is not unlimited and cannot be used to alter its fundamental framework. The case involved a challenge to the 24th, 25th, and 29th Amendments to the Constitution.",
+      "status": "Landmark",
+      "subject": "Constitutional Law"
+    },
+    {
+      "id": 2,
+      "title": "Maneka Gandhi vs. Union of India",
+      "citation": "AIR 1978 SC 597",
+      "court": "Supreme Court of India",
+      "date": "25/01/1978",
+      "summary": "The Supreme Court held that the 'procedure established by law' under Article 21 must be fair, just, and reasonable, not arbitrary or oppressive. It significantly expanded the interpretation of the Right to Life and Personal Liberty, introducing the concept of due process.",
+      "status": "Landmark",
+      "subject": "Constitutional Law"
+    },
+    {
+      "id": 3,
+      "title": "D.K. Basu vs. State of West Bengal",
+      "citation": "AIR 1997 SC 610",
+      "court": "Supreme Court of India",
+      "date": "18/12/1996",
+      "summary": "The Court laid down detailed guidelines to be followed by police during arrest and detention to prevent custodial torture and abuse of power. These guidelines are mandatory for all police officers and include informing the arrestee of their rights and the grounds of arrest.",
+      "status": "Landmark",
+      "subject": "Criminal Law"
+    },
+    {
+      "id": 4,
+      "title": "Vishaka and others vs. State of Rajasthan",
+      "citation": "AIR 1997 SC 3011",
+      "court": "Supreme Court of India",
+      "date": "13/08/1997",
+      "summary": "In the absence of any law on the subject, the Supreme Court issued guidelines to prevent sexual harassment of women at the workplace. These 'Vishaka Guidelines' were legally binding until the enactment of the Sexual Harassment of Women at Workplace Act in 2013.",
+      "status": "Landmark",
+      "subject": "Women's Rights"
+    },
+    {
+      "id": 5,
+      "title": "Shreya Singhal vs. Union of India",
+      "citation": "(2015) 5 SCC 1",
+      "court": "Supreme Court of India",
+      "date": "24/03/2015",
+      "summary": "The Supreme Court struck down Section 66A of the Information Technology Act, 2000, as unconstitutional for violating the freedom of speech and expression. The Court found the provision to be vague and overly broad.",
+      "status": "Recent",
+      "subject": "Cyber Law"
+    },
+    {
+      "id": 6,
+      "title": "Navtej Singh Johar vs. Union of India",
+      "citation": "AIR 2018 SC 4321",
+      "court": "Supreme Court of India",
+      "date": "06/09/2018",
+      "summary": "The Supreme Court decriminalized consensual homosexual acts between adults by partially striking down Section 377 of the Indian Penal Code. The Court held that sexual orientation is a natural and immutable aspect of identity and is protected under the right to privacy.",
+      "status": "Recent",
+      "subject": "Constitutional Law"
+    },
+    {
+        "id": 7,
+        "title": "Gurbaksh Singh Sibbia vs. State of Punjab",
+        "citation": "(1980) 2 SCC 565",
+        "court": "Supreme Court of India",
+        "date": "09/04/1980",
+        "summary": "This case extensively dealt with the principles governing the grant of anticipatory bail under Section 438 of the Code of Criminal Procedure (CrPC). The court emphasized that the discretion to grant anticipatory bail should be exercised with care and not in a blanket manner, balancing the individual's right to liberty with the interests of justice and the need for investigation.",
+        "status": "Landmark",
+        "subject": "Criminal Law"
+    }
+  ]
+}

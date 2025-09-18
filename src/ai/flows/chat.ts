@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { searchCaseLawDatabase } from '@/services/legal-search';
 
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 const ChatInputSchema = z.object({
@@ -34,28 +35,25 @@ const ChatOutputSchema = z.object({
 const legalSearch = ai.defineTool(
     {
       name: 'legalSearch',
-      description: 'Search for relevant legal documents and case law.',
+      description: 'Search for relevant legal documents and case law from the knowledge base.',
       inputSchema: z.object({
-        query: z.string(),
+        query: z.string().describe('A specific search query about legal topics, cases, or statutes.'),
       }),
       outputSchema: z.object({
         results: z.array(z.object({
-            source: z.string().describe('The document source.'),
-            content: z.string().describe('The document content.'),
+            source: z.string().describe('The document source or case citation.'),
+            content: z.string().describe('The content or summary of the document.'),
         })),
       }),
     },
     async (input) => {
-        // In a real RAG system, you would use the input.query to search
-        // a vector database (e.g., Chroma, Pinecone) or a search engine.
-        // For this prototype, we'll return a fixed set of simulated results
-        // to demonstrate the RAG flow.
-      return {
-        results: [
-            { source: 'Case Law 1', content: 'Details about anticipatory bail under Section 438 of the CrPC.' },
-            { source: 'Statute 2', content: 'The Indian Penal Code provides definitions and punishments for various offenses.' },
-        ]
-      };
+        const searchResults = await searchCaseLawDatabase(input.query);
+        return {
+            results: searchResults.map(c => ({
+                source: c.citation,
+                content: c.summary,
+            }))
+        };
     }
 );
 
@@ -88,7 +86,7 @@ Response Guidelines by Role:
   - Explain legal concepts and define jargon.
   - Provide context and explain the significance of the information.
   - Encourage critical thinking.
-  - Example: "Anticipatory bail, governed by Section 438 of the Code of Criminal Procedure (CrPC), allows a person to seek bail in anticipation of an arrest. This is different from regular bail because... The 'legalSearch' tool found a relevant case, 'Case Law 1', which discusses..."
+  - Example: "Anticipatory bail, governed by Section 438 of the Code of Criminal Procedure (CrPC), allows a person to seek bail in anticipation of an arrest. This is different from regular bail because... The 'legalSearch' tool found a relevant case, 'Gurbaksh Singh Sibbia vs. State of Punjab', which discusses..."
 
 - When the user is from the 'Public':
   - Be simple, empathetic, and clear.
