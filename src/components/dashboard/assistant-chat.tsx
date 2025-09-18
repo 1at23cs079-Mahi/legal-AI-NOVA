@@ -67,39 +67,57 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
     if (message.searchResult) {
       return <SearchResultTable result={message.searchResult} />;
     }
-    // Simple check for list formatting
-    if (message.content.includes('\n- ') || message.content.match(/\n\d+\./)) {
-        const parts = message.content.split('\n').filter(p => p.trim() !== '');
-        let isList = false;
-        const listItems = parts.map((part, index) => {
-            const isListItem = part.startsWith('- ') || part.match(/^\d+\.\s/);
-            if (isListItem) isList = true;
-            
-            if (part.startsWith('- ')) {
-              return <li key={index}>{part.substring(2)}</li>;
-            }
-             if (part.match(/^\d+\.\s/)) {
-              return <li key={index}>{part.substring(part.indexOf('.') + 2)}</li>;
-            }
-            return <p key={index}>{part}</p>;
-        });
+    
+    const sections = message.content.split(/(\n- |\n\d+\. )/).filter(p => p.trim() !== '');
+    
+    let isList = false;
+    const contentBlocks: React.ReactNode[] = [];
+    let currentList: { type: 'ul' | 'ol'; items: string[] } | null = null;
+    
+    const flushList = () => {
+      if (currentList) {
+        const ListComponent = currentList.type;
+        contentBlocks.push(
+          <ListComponent key={`list-${contentBlocks.length}`} className={`list-outside pl-5 space-y-1 ${ListComponent === 'ul' ? 'list-disc' : 'list-decimal'}`}>
+            {currentList.items.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ListComponent>
+        );
+        currentList = null;
+      }
+    };
 
-        if (isList) {
-             return (
-                <div className="space-y-2">
-                    {parts.map((part, index) => {
-                         if (part.startsWith('- ')) {
-                            return <ul className="list-disc list-outside pl-4" key={index}><li>{part.substring(2)}</li></ul>;
-                         }
-                         if (part.match(/^\d+\.\s/)) {
-                             return <ol className="list-decimal list-outside pl-4" key={index}><li>{part.substring(part.indexOf('.') + 2)}</li></ol>;
-                         }
-                         return <p key={index}>{part}</p>
-                    })}
-                </div>
-             );
+    message.content.split('\n').forEach((line) => {
+        const olMatch = line.match(/^\d+\.\s(.*)/);
+        const ulMatch = line.match(/^- (.*)/);
+
+        if (olMatch) {
+            if (currentList?.type !== 'ol') {
+                flushList();
+                currentList = { type: 'ol', items: [] };
+            }
+            currentList.items.push(olMatch[1]);
+        } else if (ulMatch) {
+            if (currentList?.type !== 'ul') {
+                flushList();
+                currentList = { type: 'ul', items: [] };
+            }
+            currentList.items.push(ulMatch[1]);
+        } else {
+            flushList();
+            if (line.trim() !== '') {
+                contentBlocks.push(<p key={`p-${contentBlocks.length}`}>{line}</p>);
+            }
         }
+    });
+
+    flushList(); // Add any remaining list
+
+    if (contentBlocks.length > 0) {
+        return <div className="space-y-4">{contentBlocks}</div>;
     }
+
     return <p>{message.content}</p>;
   }
 
@@ -157,9 +175,13 @@ export function AssistantChat() {
   useEffect(() => {
     const command = searchParams.get('command');
     if (command && !['analyze', 'summarize', 'translate'].includes(command)) {
-      setInput(`/${command}`);
+      setInput(`/${command} `);
+    } else {
+      const search = new URLSearchParams(searchParams);
+      search.delete('command');
+      window.history.replaceState({}, '', `?${search.toString()}`);
     }
-  }, [searchParams]);
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -297,7 +319,9 @@ export function AssistantChat() {
           case 'translate': {
             const [targetLanguage, ...textToTranslate] = query.split(' ');
             if (!targetLanguage || textToTranslate.length === 0) {
-              throw new Error('Usage: /translate <language> <text>');
+               setMessages(prev => [...prev, { role: 'model', content: 'Usage: /translate <language> <text to translate>' }]);
+               setIsLoading(false);
+               return;
             }
             response = await translateText({ targetLanguage, text: textToTranslate.join(' ') });
             response.content = response.translatedText;
