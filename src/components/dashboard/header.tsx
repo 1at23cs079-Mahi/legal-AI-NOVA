@@ -6,6 +6,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -17,13 +20,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Search, Sparkles, User, LogOut, LifeBuoy } from 'lucide-react';
+import { Search, Sparkles, User, LogOut, LifeBuoy, Sun, Moon, Laptop } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTheme } from '@/app/layout';
 
 export function DashboardHeader() {
   const searchParams = useSearchParams();
+  const { setTheme } = useTheme();
   const role = searchParams.get('role') || 'public';
   const name = searchParams.get('name') || 'User';
   const email = searchParams.get('email') || 'user@example.com';
@@ -97,6 +102,23 @@ export function DashboardHeader() {
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
+             <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                    <Sun className="h-4 w-4 mr-2 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-4 w-4 mr-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span>Theme</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme('light')}>
+                        <Sun className="mr-2 h-4 w-4" />
+                        <span>Light</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme('dark')}>
+                        <Moon className="mr-2 h-4 w-4" />
+                        <span>Dark</span>
+                    </DropdownMenuItem>
+                </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuItem>
               <LifeBuoy className="mr-2 h-4 w-4" />
               <span>Support</span>

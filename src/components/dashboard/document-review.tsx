@@ -226,7 +226,7 @@ export function DocumentReview() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : analysisResult ? (
-              <div className="prose prose-sm max-w-none text-sm text-foreground flex-1 overflow-y-auto">
+              <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert flex-1 overflow-y-auto">
                 <p>{analysisResult.content}</p>
               </div>
             ) : <div className='flex-1'/>}

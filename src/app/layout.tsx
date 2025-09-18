@@ -1,13 +1,11 @@
-import type { Metadata } from 'next';
+
+'use client';
+
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { PT_Sans, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
-
-export const metadata: Metadata = {
-  title: 'LegalAI',
-  description: 'AI-powered legal assistant for India.',
-};
+import { useState, useEffect, createContext, useContext } from 'react';
 
 const fontSans = PT_Sans({
   subsets: ['latin'],
@@ -19,6 +17,46 @@ const fontHeadline = Space_Grotesk({
   variable: '--font-headline',
 });
 
+type Theme = 'dark' | 'light';
+
+type ThemeContextType = {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+}
+
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>('light');
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') as Theme | null;
+    if (storedTheme) {
+      setTheme(storedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,11 +65,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn('font-sans antialiased', fontSans.variable, fontHeadline.variable)}>
-        {children}
-        <Toaster />
+        <ThemeProvider>
+            {children}
+            <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
-    

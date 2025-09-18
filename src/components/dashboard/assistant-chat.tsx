@@ -16,6 +16,8 @@ import {
   X,
   Send,
   User,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react';
 import { 
   chat, 
@@ -130,7 +132,7 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
           ? 'bg-primary text-primary-foreground'
           : 'bg-card'
       }`}>
-        <div className="prose prose-sm max-w-none text-sm text-foreground">
+        <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert">
           {renderContent(message)}
         </div>
         {message.citations && message.citations.length > 0 && (
@@ -144,6 +146,12 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
             </div>
         )}
          <div className="flex items-center justify-end gap-2 mt-2 text-muted-foreground">
+          {message.role === 'model' && (
+            <>
+              <Button variant="ghost" size="icon" className="h-6 w-6"><ThumbsUp className="h-3 w-3"/></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6"><ThumbsDown className="h-3 w-3"/></Button>
+            </>
+          )}
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}><Copy className="h-3 w-3"/></Button>
         </div>
       </div>
