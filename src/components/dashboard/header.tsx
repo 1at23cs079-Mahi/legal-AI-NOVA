@@ -1,3 +1,4 @@
+
 'use client';
 import {
   DropdownMenu,
@@ -20,14 +21,18 @@ import { useTheme } from '@/app/layout';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '../icons/logo';
-import { Sun, Moon, User, LogOut, LifeBuoy, Bot, Maximize, Minimize2 } from 'lucide-react';
+import { Sun, Moon, User, LogOut, LifeBuoy, Bot, Maximize, Minimize2, ChevronDown } from 'lucide-react';
 import type { ModelReference } from 'genkit/model';
 
 export type ModelId = ModelReference;
 
-const llms: { id: ModelId; name: string }[] = [
-    { id: 'googleai/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-    { id: 'googleai/gemini-pro', name: 'Gemini Pro' },
+const llms: { id: ModelId; name: string, description: string }[] = [
+    { id: 'googleai/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and cost-effective for high-frequency tasks.' },
+    { id: 'googleai/gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast, multimodal model for varied tasks.' },
+    { id: 'googleai/gemini-pro', name: 'Gemini Pro', description: 'Legacy model, balanced performance.' },
+    { id: 'googleai/gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Advanced reasoning, great for complex analysis.' },
+    { id: 'googleai/gemini-2.5-pro-vision', name: 'Gemini 2.5 Pro Vision', description: 'Specialized for visual understanding.'},
+    { id: 'googleai/text-embedding-004', name: 'Text Embedding 004', description: 'Generates text embeddings.'}
 ];
 
 export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: ModelId, setSelectedLlm: (id: ModelId) => void }) {
@@ -60,6 +65,8 @@ export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: 
     }
   };
 
+  const selectedLlmDetails = llms.find(llm => llm.id === selectedLlm);
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -70,16 +77,24 @@ export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: 
       <div className="flex flex-1 items-center justify-end gap-2">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between">
-                    {llms.find(llm => llm.id === selectedLlm)?.name}
-                    <Bot className="h-4 w-4" />
+                <Button variant="outline" className="w-[220px] justify-start text-left">
+                    <Bot className="h-4 w-4 mr-2 flex-shrink-0"/>
+                    <div className="flex-1 truncate">
+                        <p className="font-medium text-sm">{selectedLlmDetails?.name || 'Select a model'}</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 ml-2"/>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[180px]">
+            <DropdownMenuContent className="w-[300px]">
                 <DropdownMenuLabel>Select LLM</DropdownMenuLabel>
                 <DropdownMenuRadioGroup value={selectedLlm as string} onValueChange={(v) => setSelectedLlm(v as ModelId)}>
                     {llms.map(llm => (
-                        <DropdownMenuRadioItem key={llm.id as string} value={llm.id as string}>{llm.name}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem key={llm.id as string} value={llm.id as string} className="cursor-pointer">
+                            <div className="flex flex-col">
+                                <p className="font-medium">{llm.name}</p>
+                                <p className="text-xs text-muted-foreground">{llm.description}</p>
+                            </div>
+                        </DropdownMenuRadioItem>
                     ))}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
