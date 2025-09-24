@@ -16,8 +16,8 @@ export default function WelcomePage() {
         
         <div className="mt-10">
           <Button asChild size="lg" className="shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-            <Link href="/register">
-                Sign in with Google
+            <Link href="/login">
+                Get Started
             </Link>
           </Button>
         </div>
