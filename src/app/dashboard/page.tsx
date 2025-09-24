@@ -64,10 +64,10 @@ const roleConfig = {
                 command: ''
             },
             {
-                title: "Document Analysis",
-                description: "Upload and analyze legal documents for clauses, precedents, and redlines.",
-                icon: FileText,
-                command: 'analyze'
+                title: "Legal Terminology",
+                description: "Get simple explanations for complex legal terms.",
+                icon: BookOpen,
+                command: 'explain'
             },
             {
                 title: "Case Law Search",
@@ -188,9 +188,9 @@ export default function DashboardPage() {
             const search = new URLSearchParams(searchParams.toString());
             let href = '';
 
-            if (item.title === 'Document Analysis') {
+            if (item.title === 'Legal Terminology') {
                 search.delete('command');
-                href = `/dashboard/document-review?${search.toString()}`;
+                href = `/dashboard/legal-terminology?${search.toString()}`;
             } else {
                 if (item.command) {
                     search.set('command', item.command);

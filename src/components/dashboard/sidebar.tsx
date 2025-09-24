@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Plus,
   FileText,
-  Home
+  Home,
+  BookOpen
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import Link from 'next/link';
@@ -93,12 +94,12 @@ export function DashboardSidebar() {
                  <SidebarMenuItem>
                     <SidebarMenuButton 
                         asChild
-                        isActive={pathname === '/dashboard/document-review'}
-                        tooltip={{ children: 'Document Review', side: 'right' }}
+                        isActive={pathname === '/dashboard/legal-terminology'}
+                        tooltip={{ children: 'Legal Terminology', side: 'right' }}
                     >
-                        <Link href={`/dashboard/document-review?${queryString}`}>
-                            <FileText />
-                            <span>Document Review</span>
+                        <Link href={`/dashboard/legal-terminology?${queryString}`}>
+                            <BookOpen />
+                            <span>Legal Terminology</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

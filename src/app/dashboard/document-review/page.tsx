@@ -1,10 +1,10 @@
 
-import { DocumentReview } from '@/components/dashboard/document-review';
+import { LegalTerminology } from '@/components/dashboard/legal-terminology';
 
-export default function DocumentAnalysisPage() {
+export default function LegalTerminologyPage() {
   return (
     <div className="h-[calc(100vh_-_4.5rem)]">
-        <DocumentReview />
+        <LegalTerminology />
     </div>
   );
 }
