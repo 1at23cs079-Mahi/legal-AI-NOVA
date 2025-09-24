@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AssistantChat } from '@/components/dashboard/assistant-chat';
