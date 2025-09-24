@@ -45,7 +45,6 @@ export default function LoginPage() {
         }
     } catch (e) {
         console.error("Error fetching user data from Firestore:", e);
-        // Do not block login if firestore fails, but notify user
         toast({
             variant: 'destructive',
             title: 'Profile Error',
@@ -57,6 +56,11 @@ export default function LoginPage() {
       title: 'Login Successful',
       description: 'Welcome back!',
     });
+
+    if (role === 'admin') {
+      router.push('/admin/dashboard');
+      return;
+    }
 
     const queryParams = new URLSearchParams({
         name,
@@ -81,7 +85,7 @@ export default function LoginPage() {
         } else if (email === 'public@legalai.com') {
             demoUser = { name: 'Demo User', role: 'public', email: 'public@legalai.com' };
         } else if (email === 'admin@legalai.com') {
-            demoUser = { name: 'Demo Admin', role: 'advocate', email: 'admin@legalai.com' }; // Admin uses advocate role for now
+            demoUser = { name: 'Demo Admin', role: 'admin', email: 'admin@legalai.com' };
         }
 
         if (demoUser) {
@@ -89,6 +93,13 @@ export default function LoginPage() {
                 title: 'Demo Login Successful',
                 description: `Welcome, ${demoUser.name}!`,
             });
+
+            if (demoUser.role === 'admin') {
+              router.push('/admin/dashboard');
+              setIsLoading(false);
+              return;
+            }
+
             const queryParams = new URLSearchParams({
                 name: demoUser.name,
                 role: demoUser.role,
