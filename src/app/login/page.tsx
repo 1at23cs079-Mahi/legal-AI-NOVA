@@ -35,7 +35,8 @@ export default function LoginPage() {
     let role = 'public'; // default
 
     try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
           name = userData.name;
@@ -43,6 +44,11 @@ export default function LoginPage() {
         }
     } catch (e) {
         console.error("Error fetching user data from Firestore:", e);
+        toast({
+            variant: 'destructive',
+            title: 'Firestore Error',
+            description: 'Could not fetch user profile. Please try again.',
+        });
     }
     
     toast({
