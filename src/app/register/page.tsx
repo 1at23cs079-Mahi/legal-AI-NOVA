@@ -69,8 +69,7 @@ export default function RegisterPage() {
       });
 
       // 3. Save user profile to Firestore
-      // This is the step that requires the correct security rules.
-      // The rules must allow a 'create' operation on the users collection.
+      // The security rules will allow this because request.auth.uid will match the document ID.
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         name: name,
@@ -88,10 +87,14 @@ export default function RegisterPage() {
 
     } catch (error: any) {
       console.error("Registration Error:", error);
+      let errorMessage = error.message;
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Failed to save user profile. Please ensure Firestore security rules are deployed correctly.'
+      }
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
