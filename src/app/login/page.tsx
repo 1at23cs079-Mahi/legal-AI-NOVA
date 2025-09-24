@@ -71,6 +71,23 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
+    // --- DEMO MODE ---
+    if (email === 'demo@legalai.com' && password === 'password') {
+        toast({
+            title: 'Demo Login Successful',
+            description: 'Welcome, Demo Advocate!',
+        });
+        const queryParams = new URLSearchParams({
+            name: 'Demo Advocate',
+            role: 'advocate',
+            email: 'demo@legalai.com',
+        });
+        router.push(`/dashboard?${queryParams.toString()}`);
+        setIsLoading(false);
+        return;
+    }
+    // --- END DEMO MODE ---
+
     try {
       const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
@@ -218,3 +235,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
