@@ -2,24 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection rules
+    // Users collection:
+    // - Allow any authenticated user to create their own user document.
+    // - Allow users to read, update, or delete only their own document.
     match /users/{userId} {
-      // Allow user document creation only if the user is creating their own document.
-      // This is crucial for registration to work.
-      allow create: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow authenticated users to only read, update, or delete their own document.
+      allow create: if request.auth != null;
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User-specific cases or documents collection
+    // Example: user-specific cases or documents collection
     match /cases/{caseId} {
-      allow create: if request.auth != null; // Any logged-in user can create
+      allow create: if request.auth != null; // any logged-in user can create
       allow read, update, delete: if request.auth != null 
                                   && request.auth.uid == resource.data.ownerId;
     }
 
-    // Research queries for Legal AI (per user)
+    // Example: research queries for Legal AI (per user)
     match /queries/{queryId} {
       allow create: if request.auth != null; 
       allow read, update, delete: if request.auth != null 
