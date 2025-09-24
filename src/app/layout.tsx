@@ -11,10 +11,12 @@ const fontSans = PT_Sans({
   subsets: ['latin'],
   weight: ['400', '700'],
   variable: '--font-sans',
+  display: 'swap',
 });
 const fontHeadline = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-headline',
+  display: 'swap',
 });
 
 type Theme = 'dark' | 'light';
