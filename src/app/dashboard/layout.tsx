@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, type ReactNode } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import {
   Sidebar,
   SidebarBody,
@@ -14,7 +14,7 @@ import { DashboardSidebar } from '@/components/dashboard/sidebar';
 import { DashboardHeader, type ModelId } from '@/components/dashboard/header';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [selectedLlm, setSelectedLlm] = useState<ModelId>('googleai/gemini-2.5-flash');
+  const [selectedLlm, setSelectedLlm] = useState<ModelId>('googleai/gemini-1.5-pro');
 
   return (
     <SidebarProvider>
