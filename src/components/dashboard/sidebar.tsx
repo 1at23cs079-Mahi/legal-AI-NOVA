@@ -3,6 +3,8 @@
 
 import {
   Sidebar,
+  SidebarBody,
+  SidebarContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
@@ -11,22 +13,28 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
-  Database,
-  Upload,
-  Users,
-  LineChart,
-  GitBranch,
-  LogOut,
   Settings,
-  LayoutDashboard,
-  Briefcase,
-  BookOpen,
+  LogOut,
+  MessageSquare,
+  Plus,
+  FileText,
+  Home
 } from 'lucide-react';
 import { Logo } from '@/components/icons/logo';
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
+import { ScrollArea } from '../ui/scroll-area';
+
+const conversations = [
+    { id: '1', title: 'Anticipatory Bail under 438' },
+    { id: '2', title: 'Civil Suit for Recovery' },
+    { id: '3', title: 'Drafting a Lease Agreement' },
+    { id: '4', title: 'PIL for Environmental Issue' },
+    { id: '5', title: 'Consumer Complaint about Defective Product' },
+    { id: '6', title: 'Landmark Judgements on Article 21' },
+];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -44,26 +52,6 @@ export function DashboardSidebar() {
   if (email) preservedSearchParams.set('email', email);
   const queryString = preservedSearchParams.toString();
   
-  const allMenuItems = {
-    advocate: [
-        { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
-        { href: `/dashboard/case-management?${queryString}`, label: 'Case Management', icon: Briefcase, tooltip: 'Case Management' },
-        { href: `#`, label: 'Database Sources', icon: Database, tooltip: 'Database Sources' },
-        { href: '#', label: 'Uploads', icon: Upload, tooltip: 'Uploads' },
-        { href: '#', label: 'Analytics', icon: LineChart, tooltip: 'Analytics' },
-    ],
-    student: [
-        { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
-        { href: `/dashboard/case-management?${queryString}`, label: 'LegalAI', icon: BookOpen, tooltip: 'LegalAI' },
-    ],
-    public: [
-        { href: `/dashboard?${queryString}`, label: 'Dashboard', icon: LayoutDashboard, tooltip: 'Dashboard' },
-        { href: `/dashboard/case-management?${queryString}`, label: 'LegalAI', icon: Briefcase, tooltip: 'LegalAI' },
-    ]
-  };
-
-  const menuItems = allMenuItems[role as keyof typeof allMenuItems] || allMenuItems.public;
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -87,37 +75,83 @@ export function DashboardSidebar() {
       <SidebarHeader>
         <Logo iconClassName="text-sidebar-primary" />
       </SidebarHeader>
-      <SidebarMenu className="flex-1">
-        {menuItems.map((item) => (
-          <SidebarMenuItem key={item.label}>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === item.href.split('?')[0]}
-              tooltip={{ children: item.tooltip, side: 'right' }}
-            >
-              <Link href={item.href}>
-                <item.icon />
-                <span>{item.label}</span>
-              </Link>
+      <SidebarBody className="flex-1 overflow-hidden">
+        <div className="p-2">
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton 
+                        asChild
+                        isActive={pathname === '/dashboard'}
+                        tooltip={{ children: 'Dashboard', side: 'right' }}
+                    >
+                        <Link href={`/dashboard?${queryString}`}>
+                            <Home />
+                            <span>Dashboard</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton 
+                        asChild
+                        isActive={pathname === '/dashboard/document-review'}
+                        tooltip={{ children: 'Document Review', side: 'right' }}
+                    >
+                        <Link href={`/dashboard/document-review?${queryString}`}>
+                            <FileText />
+                            <span>Document Review</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </div>
+        <SidebarSeparator />
+         <div className="flex items-center justify-between p-2">
+            <p className="text-sm font-medium text-muted-foreground px-2 group-data-[collapsible=icon]:hidden">
+                Chats
+            </p>
+             <SidebarMenuButton size="icon" variant="ghost" className="h-8 w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8">
+                <Plus className="h-4 w-4" />
             </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
+        </div>
+        <ScrollArea className="flex-1 px-2">
+            <SidebarMenu>
+                {conversations.map(convo => (
+                     <SidebarMenuItem key={convo.id}>
+                        <SidebarMenuButton 
+                             asChild
+                             isActive={pathname === `/dashboard/case-management`} // will be `/chat/${convo.id}`
+                             tooltip={{ children: convo.title, side: 'right' }}
+                        >
+                            <Link href={`/dashboard/case-management?${queryString}`}>
+                                <MessageSquare />
+                                <span>{convo.title}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+        </ScrollArea>
+
+      </SidebarBody>
       <SidebarSeparator />
       <SidebarFooter className="p-2">
-         <SidebarMenuButton asChild tooltip={{ children: 'Settings', side: 'right' }}>
-              <Link href="#">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-         </SidebarMenuButton>
-         <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Log out', side: 'right' }}>
-              <LogOut />
-              <span>Log Out</span>
-         </SidebarMenuButton>
+         <SidebarMenu>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Settings', side: 'right' }}>
+                    <Link href="#">
+                        <Settings />
+                        <span>Settings</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} tooltip={{ children: 'Log out', side: 'right' }}>
+                    <LogOut />
+                    <span>Log Out</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
 }
-
-    

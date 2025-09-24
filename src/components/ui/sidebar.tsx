@@ -395,23 +395,23 @@ const SidebarSeparator = React.forwardRef<
 })
 SidebarSeparator.displayName = "SidebarSeparator"
 
-const SidebarContent = React.forwardRef<
+const SidebarBody = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
   return (
     <div
       ref={ref}
-      data-sidebar="content"
+      data-sidebar="body"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
+        "flex min-h-0 flex-1 flex-col gap-2 group-data-[collapsible=icon]:overflow-hidden",
         className
       )}
       {...props}
     />
   )
 })
-SidebarContent.displayName = "SidebarContent"
+SidebarBody.displayName = "SidebarBody"
 
 const SidebarGroup = React.forwardRef<
   HTMLDivElement,
@@ -524,6 +524,7 @@ const sidebarMenuButtonVariants = cva(
         default: "h-8 text-sm",
         sm: "h-7 text-xs",
         lg: "h-12 text-sm group-data-[collapsible=icon]:!p-0",
+        icon: "h-8 w-8"
       },
     },
     defaultVariants: {
@@ -737,7 +738,7 @@ SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
 export {
   Sidebar,
-  SidebarContent,
+  SidebarBody,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupAction,

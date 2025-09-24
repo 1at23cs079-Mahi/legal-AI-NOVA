@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { ModelId } from './header';
+import { CommandMenu } from './command-menu';
 
 
 type Message = {
@@ -244,8 +245,9 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
 
       <div className="border-t bg-background px-4 py-3">
         <form onSubmit={handleFormSubmit} className="relative">
+          <CommandMenu input={input} setInput={setInput} />
           <Textarea
-            placeholder="Ask anything..."
+            placeholder="Ask anything or type '/' for commands..."
             className="pr-24 pl-10 py-3 min-h-[52px] resize-none focus-visible:shadow-lg"
             value={input}
             onChange={e => setInput(e.target.value)}
