@@ -17,18 +17,24 @@ const AnalyzeDocumentAndSuggestEditsInputSchema = z.object({
   documentDataUri: z
     .string()
     .describe(
-      "A legal document as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ).optional(),
+      "A legal document as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. Supported file types: PDF, DOCX, TXT."
+    ),
 });
 export type AnalyzeDocumentAndSuggestEditsInput = z.infer<
   typeof AnalyzeDocumentAndSuggestEditsInputSchema
 >;
 
+const AnalysisResultSchema = z.object({
+    annotatedClauses: z.string().describe("A summary of the key clauses identified in the document."),
+    suggestedEdits: z.string().describe("Specific redline edits suggested for the flagged clauses. Provide actionable and clear suggestions."),
+    matchingPrecedent: z.string().describe("Relevant legal precedents that match or support the suggested edits for each flagged clause."),
+});
+
 const AnalyzeDocumentAndSuggestEditsOutputSchema = z.object({
   analysisResults: z
     .string()
     .describe(
-      'The analysis results, including annotated clauses, suggested redline edits, and matching precedent for each flagged clause.'
+      'A JSON string containing the analysis results. The JSON object should have three keys: "annotatedClauses", "suggestedEdits", and "matchingPrecedent".'
     ),
 });
 export type AnalyzeDocumentAndSuggestEditsOutput = z.infer<
@@ -44,20 +50,17 @@ export async function analyzeDocumentAndSuggestEdits(
 const analyzeDocumentAndSuggestEditsPrompt = ai.definePrompt({
   name: 'analyzeDocumentAndSuggestEditsPrompt',
   input: {schema: AnalyzeDocumentAndSuggestEditsInputSchema},
-  output: {schema: AnalyzeDocumentAndSuggestEditsOutputSchema},
-  prompt: `You are a legal expert specializing in analyzing legal documents.
+  output: {schema: z.object({ analysisResults: AnalysisResultSchema }) },
+  prompt: `You are a legal expert specializing in contract analysis. Your task is to review the provided legal document and perform a comprehensive analysis.
 
-{{#if documentDataUri}}
-You will use this document to identify clauses, suggest redline edits, and provide matching precedent for each flagged clause.
+Document to Analyze: {{media url=documentDataUri}}
 
-Document: {{media url=documentDataUri}}
+Please perform the following actions:
+1.  **Annotate Clauses**: Identify and summarize the key clauses in the document. Focus on clauses related to liability, termination, payment terms, and intellectual property.
+2.  **Suggest Redline Edits**: For each clause you identify as potentially problematic or ambiguous, suggest specific redline edits. Your suggestions should be clear, concise, and aimed at improving the clarity and fairness of the document.
+3.  **Find Matching Precedent**: For each suggested edit, provide relevant legal precedents or statutory provisions that support your recommendation. Cite sources where possible.
 
-Analyze the document and provide the analysis results. Focus on potential issues, inconsistencies, and areas for improvement.
-
-Ensure that the analysis results include specific suggestions for redline edits and relevant precedent to support each suggestion.
-{{else}}
-Please upload a document to be analyzed. I cannot provide a review without a document.
-{{/if}}
+Return your entire analysis as a single JSON object with the keys "annotatedClauses", "suggestedEdits", and "matchingPrecedent". Do not include any other text or formatting in your response.
 `,
 });
 
@@ -68,7 +71,15 @@ const analyzeDocumentAndSuggestEditsFlow = ai.defineFlow(
     outputSchema: AnalyzeDocumentAndSuggestEditsOutputSchema,
   },
   async input => {
+    if (!input.documentDataUri) {
+        throw new Error('A document must be provided for analysis.');
+    }
     const {output} = await analyzeDocumentAndSuggestEditsPrompt(input);
-    return output!;
+    if (!output) {
+        throw new Error('The model did not return a valid analysis.');
+    }
+    return {
+        analysisResults: JSON.stringify(output.analysisResults),
+    };
   }
 );

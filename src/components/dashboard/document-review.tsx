@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Loader2,
   Copy,
@@ -18,11 +18,13 @@ import {
   FileCheck2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { reviewDocument } from '@/ai/flows/review-document';
+import { analyzeDocumentAndSuggestEdits } from '@/ai/flows/analyze-document-and-suggest-edits';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type AnalysisResult = {
-  content: string;
+  annotatedClauses: string;
+  suggestedEdits: string;
+  matchingPrecedent: string;
 };
 
 export function DocumentReview() {
@@ -32,11 +34,19 @@ export function DocumentReview() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
     null
   );
-  const [prompt, setPrompt] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files[0]) {
+      // Limit file size to 10MB
+      if (files[0].size > 10 * 1024 * 1024) {
+        toast({
+          variant: 'destructive',
+          title: 'File too large',
+          description: 'Please upload a file smaller than 10MB.',
+        });
+        return;
+      }
       setFile(files[0]);
     }
   };
@@ -65,22 +75,14 @@ export function DocumentReview() {
     }
   };
 
-  const executeReview = async () => {
+  const executeAnalysis = async () => {
     if (!file) {
       toast({
         variant: 'destructive',
         title: 'No file selected',
-        description: 'Please upload a document to review.',
+        description: 'Please upload a document to analyze.',
       });
       return;
-    }
-    if (!prompt) {
-        toast({
-            variant: 'destructive',
-            title: 'No instruction provided',
-            description: 'Please provide an instruction for what to do with the document.',
-        });
-        return;
     }
     setIsLoading(true);
     setAnalysisResult(null);
@@ -93,39 +95,41 @@ export function DocumentReview() {
         reader.readAsDataURL(file);
       });
 
-      const response = await reviewDocument({ documentDataUri: dataUri, prompt: prompt });
+      const response = await analyzeDocumentAndSuggestEdits({ documentDataUri: dataUri });
+      const parsedResults = JSON.parse(response.analysisResults);
+
       setAnalysisResult({
-        content: response.result,
+        annotatedClauses: parsedResults.annotatedClauses || "No clauses annotated.",
+        suggestedEdits: parsedResults.suggestedEdits || "No edits suggested.",
+        matchingPrecedent: parsedResults.matchingPrecedent || "No matching precedent found.",
       });
 
     } catch (error: any) {
-      console.error('Document review failed:', error);
+      console.error('Document analysis failed:', error);
       toast({
         variant: 'destructive',
         title: 'An error occurred',
         description:
           error.message ||
-          'Failed to complete the document review. Please try again later.',
+          'Failed to complete the analysis. The model may have returned an unexpected format. Please try again.',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCopy = () => {
-    if (analysisResult) {
-      navigator.clipboard.writeText(analysisResult.content);
-      toast({
-        description: 'Copied to clipboard!',
-      });
-    }
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast({
+      description: 'Copied to clipboard!',
+    });
   };
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 gap-6">
-      <div className="flex flex-col gap-4">
+    <div className="grid md:grid-cols-2 gap-6 h-full">
+      <div className="flex flex-col gap-6">
         <Card
-          className={`flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed transition-colors duration-300 min-h-[200px] ${
+          className={`flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed transition-colors duration-300 ${
             isDragging ? 'border-primary bg-primary/10' : 'border-border'
           }`}
           onDragEnter={handleDragEnter}
@@ -147,14 +151,14 @@ export function DocumentReview() {
                 variant="outline"
                 className="mt-6"
               >
-                <label htmlFor="file-upload-review">
+                <label htmlFor="file-upload">
                   Browse File
                   <input
-                    id="file-upload-review"
+                    id="file-upload"
                     type="file"
                     className="hidden"
                     onChange={(e) => handleFileChange(e.target.files)}
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                    accept=".pdf,.doc,.docx,.txt"
                   />
                 </label>
               </Button>
@@ -178,61 +182,86 @@ export function DocumentReview() {
             </div>
           )}
         </Card>
-        <div className="flex flex-col gap-2">
-            <Textarea 
-                placeholder="Tell me what to do with the document. E.g., 'Summarize this document' or 'Extract the buyer, seller, and property address'."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={isLoading}
-                className='min-h-[80px]'
-            />
-          <Button
-            onClick={executeReview}
-            disabled={!file || isLoading || !prompt}
-            className="w-full"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              'Review Document'
-            )}
-          </Button>
-        </div>
-      </div>
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className='space-y-1'>
-              <CardTitle>Analysis Result</CardTitle>
-              <CardDescription>
-              { !analysisResult && !isLoading ? 'Your document analysis will appear here.' : ''}
-              </CardDescription>
-          </div>
-          {analysisResult && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCopy}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+        <Button
+          onClick={executeAnalysis}
+          disabled={!file || isLoading}
+          className="w-full"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            'Analyze Document'
           )}
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          <ScrollArea className='flex-1'>
-            <div className='pr-4'>
-                {isLoading ? (
-                <div className="flex flex-1 items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-                ) : analysisResult ? (
-                <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert flex-1">
-                    <p>{analysisResult.content}</p>
-                </div>
-                ) : <div className='flex-1'/>}
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {isLoading ? (
+          <Card className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Analyzing document...</p>
             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+          </Card>
+        ) : analysisResult ? (
+          <>
+            <Card className="flex-1 flex flex-col">
+              <CardHeader className="flex-row items-center justify-between">
+                <CardTitle>Annotated Clauses</CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => handleCopy(analysisResult.annotatedClauses)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <ScrollArea className="h-full">
+                  <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert">
+                    <p>{analysisResult.annotatedClauses}</p>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+            <Card className="flex-1 flex flex-col">
+              <CardHeader className="flex-row items-center justify-between">
+                <CardTitle>Suggested Redline Edits</CardTitle>
+                 <Button variant="ghost" size="icon" onClick={() => handleCopy(analysisResult.suggestedEdits)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="flex-1">
+                 <ScrollArea className="h-full">
+                   <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert">
+                    <p>{analysisResult.suggestedEdits}</p>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+             <Card className="flex-1 flex flex-col">
+              <CardHeader className="flex-row items-center justify-between">
+                <CardTitle>Matching Precedent</CardTitle>
+                 <Button variant="ghost" size="icon" onClick={() => handleCopy(analysisResult.matchingPrecedent)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="flex-1">
+                 <ScrollArea className="h-full">
+                   <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert">
+                    <p>{analysisResult.matchingPrecedent}</p>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <Card className="flex-1 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <p>Your analysis results will appear here.</p>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
