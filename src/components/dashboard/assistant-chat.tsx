@@ -2,62 +2,48 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  FileText,
   Loader2,
   Copy,
-  Mic,
   Paperclip,
-  X,
   Send,
   User,
   ThumbsUp,
   ThumbsDown,
+  RefreshCcw,
+  Bot
 } from 'lucide-react';
 import { 
   chat, 
   ChatInput,
 } from '@/ai/flows/chat';
-import { draftLegalPetition } from '@/ai/flows/draft-legal-petition';
-import { generateCaseTimeline } from '@/ai/flows/generate-case-timeline';
-import { searchCaseLaw, SearchCaseLawOutput } from '@/ai/flows/search-case-law';
-import { translateText } from '@/ai/flows/translate-text';
-import { transcribeAudio } from '@/ai/flows/transcribe-audio';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
-import { Logo } from '@/components/icons/logo';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { CommandMenu } from '@/components/dashboard/command-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Scale } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 
 type Message = {
+  id: string;
   role: 'user' | 'model';
   content: string;
-  citations?: string[];
-  analysisResults?: string;
-  timeline?: string;
-  searchResult?: SearchCaseLawOutput;
+  avatar: string;
+  name: string;
+  error?: boolean;
 };
 
+const TypingIndicator = () => (
+  <div className="flex items-center space-x-1">
+    <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce-dot-1" />
+    <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce-dot-2" />
+    <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce-dot-3" />
+  </div>
+);
+
 // Memoize the message component to prevent re-renders
-const MemoizedMessage = memo(function Message({ message }: { message: Message }) {
+const MemoizedMessage = memo(function Message({ message, onRetry }: { message: Message; onRetry: (messageId: string) => void }) {
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -67,99 +53,52 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
     });
   };
 
-  const renderContent = (message: Message) => {
-    if (message.searchResult) {
-      return <SearchResultTable result={message.searchResult} />;
-    }
-    
-    const contentBlocks: React.ReactNode[] = [];
-    let currentList: { type: 'ul' | 'ol'; items: string[] } | null = null;
-
-    const flushList = () => {
-      if (currentList) {
-        const ListComponent = currentList.type;
-        contentBlocks.push(
-          <ListComponent key={`list-${contentBlocks.length}`} className={`list-outside pl-5 space-y-1 ${ListComponent === 'ul' ? 'list-disc' : 'list-decimal'}`}>
-            {currentList.items.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ListComponent>
-        );
-        currentList = null;
-      }
-    };
-
-    message.content.split('\n').forEach((line, index) => {
-      const olMatch = line.match(/^\d+\.\s(.*)/);
-      const ulMatch = line.match(/^- (.*)/);
-
-      if (olMatch) {
-        if (currentList?.type !== 'ol') {
-          flushList();
-          currentList = { type: 'ol', items: [] };
-        }
-        currentList.items.push(olMatch[1]);
-      } else if (ulMatch) {
-        if (currentList?.type !== 'ul') {
-          flushList();
-          currentList = { type: 'ul', items: [] };
-        }
-        currentList.items.push(ulMatch[1]);
-      } else {
-        flushList();
-        if (line.trim() !== '') {
-          contentBlocks.push(<p key={`p-${contentBlocks.length}`}>{line}</p>);
-        }
-      }
-    });
-
-    flushList(); // Add any remaining list
-
-    if (contentBlocks.length > 0) {
-        return <div className="space-y-4">{contentBlocks}</div>;
-    }
-
-    return <p>{message.content}</p>;
-  }
+  const isUser = message.role === 'user';
 
   return (
-    <div className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-      {message.role === 'model' && (
-        <Avatar className="w-8 h-8 border-2 border-primary/50">
-          <AvatarFallback className="bg-primary/20"><Scale className="w-4 h-4 text-primary"/></AvatarFallback>
+    <div className={cn("flex items-start gap-3 animate-fade-in", isUser ? 'justify-end' : 'justify-start')}>
+      {!isUser && (
+        <Avatar className="h-8 w-8">
+            <AvatarImage src={message.avatar} alt={message.name} />
+            <AvatarFallback>{message.name.charAt(0)}</AvatarFallback>
         </Avatar>
       )}
-      <div className={`max-w-2xl rounded-lg px-4 py-3 shadow-sm ${
-        message.role === 'user'
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-card'
-      }`}>
-        <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert">
-          {renderContent(message)}
-        </div>
-        {message.citations && message.citations.length > 0 && (
-           <div className="mt-4">
-              <h4 className="font-semibold text-xs mb-1">Citations</h4>
-              <ul className="list-disc pl-5 space-y-1 text-xs">
-                {message.citations.map((c: string, i: number) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-        )}
-         <div className="flex items-center justify-end gap-2 mt-2 text-muted-foreground">
-          {message.role === 'model' && (
-            <>
-              <Button variant="ghost" size="icon" className="h-6 w-6"><ThumbsUp className="h-3 w-3"/></Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6"><ThumbsDown className="h-3 w-3"/></Button>
-            </>
-          )}
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}><Copy className="h-3 w-3"/></Button>
+      <div className={cn(
+        'group relative max-w-lg rounded-xl px-4 py-2.5 shadow-sm',
+        isUser
+          ? 'bg-gradient-to-r from-[#3b82f6] to-[#60a5fa] text-white'
+          : 'bg-card text-card-foreground',
+        { 'bg-destructive/20 border border-destructive/50': message.error }
+      )}>
+        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+        <div className="mt-2 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {message.error ? (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onRetry(message.id)}>
+                    <RefreshCcw className="h-3 w-3 text-destructive" />
+                </Button>
+            ) : (
+                <>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
+                        <Copy className="h-3 w-3" />
+                    </Button>
+                    {!isUser && (
+                        <>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <ThumbsUp className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <ThumbsDown className="h-3 w-3" />
+                            </Button>
+                        </>
+                    )}
+                </>
+            )}
         </div>
       </div>
-       {message.role === 'user' && (
-        <Avatar className="w-8 h-8 border">
-          <AvatarFallback><User className="w-4 h-4"/></AvatarFallback>
+      {isUser && (
+        <Avatar className="h-8 w-8">
+            <AvatarImage src={message.avatar} alt={message.name} />
+            <AvatarFallback>{message.name.charAt(0)}</AvatarFallback>
         </Avatar>
       )}
     </div>
@@ -168,34 +107,22 @@ const MemoizedMessage = memo(function Message({ message }: { message: Message })
 
 
 export function AssistantChat() {
-  const { toast } = useToast();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const name = searchParams.get('name') || 'User';
+  const email = searchParams.get('email') || '';
+  const userAvatar = `https://picsum.photos/seed/${email}/40/40`;
+  const botAvatar = `https://picsum.photos/seed/bot/40/40`;
 
   useEffect(() => {
-    const command = searchParams.get('command');
-    if (command && !['analyze', 'summarize', 'translate'].includes(command)) {
-      setInput(`/${command} `);
-    } else if (!command) {
-        // Clear command if it's one of the excluded ones or not present
-        const search = new URLSearchParams(searchParams);
-        search.delete('command');
-        window.history.replaceState({}, '', `?${search.toString()}`);
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
     }
-  }, []);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFile(event.target.files[0]);
-    }
-  };
+  }, [messages]);
 
   const getRole = () => {
     const role = searchParams.get('role');
@@ -204,203 +131,107 @@ export function AssistantChat() {
     return 'Public';
   };
   
-  const startRecording = async () => {
-    // aac, mp3, webm, ogg, wav
-    const mimeTypes = [
-      'audio/webm',
-      'audio/mp4',
-      'audio/ogg',
-      'audio/wav',
-      'audio/aac',
-    ];
-    let supportedMimeType: string | undefined;
-    for (const mimeType of mimeTypes) {
-      if (MediaRecorder.isTypeSupported(mimeType)) {
-        supportedMimeType = mimeType;
-        break;
-      }
-    }
+  const sendMessage = async (messageContent: string, messageHistory: Message[]) => {
+    if (!messageContent.trim()) return;
 
-    if (!supportedMimeType) {
-      toast({
-        variant: 'destructive',
-        title: 'Audio Recording Not Supported',
-        description: 'Your browser does not support any of the required audio formats.',
-      });
-      return;
-    }
+    const newUserMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: messageContent,
+        avatar: userAvatar,
+        name: name,
+    };
     
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: supportedMimeType });
-      audioChunksRef.current = [];
-
-      mediaRecorderRef.current.ondataavailable = event => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: supportedMimeType });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64Audio = reader.result as string;
-          // When recording stops, immediately execute the transcription task.
-          await executeTask('/transcribe', undefined, base64Audio);
-        };
-      };
-
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Microphone Access Denied',
-        description:
-          'Please enable microphone permissions in your browser settings.',
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-  
-  const getCommand = (input: string): { command: string, query: string } | null => {
-    const match = input.match(/^\/(\w+)\s*(.*)/s);
-    if (match) {
-        return { command: match[1], query: match[2].trim() };
-    }
-    return null;
-  }
-
-  const executeTask = async (currentInput: string, attachedFile?: File | null, audioUri?: string) => {
-    if (!currentInput && !attachedFile && !audioUri) return;
-    
-    setIsLoading(true);
-    
-    const userMessage: Message = { role: 'user', content: currentInput };
-    setMessages(prev => [...prev, userMessage]);
-    
+    setMessages(prev => [...prev, newUserMessage]);
     setInput('');
-    setFile(null);
+    setIsLoading(true);
 
     try {
-      const commandInfo = getCommand(currentInput);
-      let dataUri: string | undefined = audioUri;
-
-      if (attachedFile) {
-        dataUri = await new Promise<string>(resolve => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target?.result as string);
-          reader.readAsDataURL(attachedFile);
-        });
-      }
-      
-      let response: any;
-
-      if (commandInfo) {
-        const { command, query } = commandInfo;
-        const userRole = getRole();
-
-        switch(command) {
-          case 'draft':
-            response = await draftLegalPetition({ query, userRole });
-            response.content = response.draft;
-            break;
-          case 'timeline':
-            response = await generateCaseTimeline({ caseDetails: query });
-            response.content = response.timeline;
-            break;
-          case 'search':
-            response = await searchCaseLaw({ query });
-            if (response.results) {
-                response.content = `Here are the top ${response.results.length} case law results for your query: "${query}"`;
-                response.searchResult = response;
-            } else {
-                 response.content = `No results found for "${query}"`;
-            }
-            break;
-          case 'translate': {
-            const [targetLanguage, ...textToTranslate] = query.split(' ');
-            if (!targetLanguage || textToTranslate.length === 0) {
-               setMessages(prev => [...prev, { role: 'model', content: 'Usage: /translate <language> <text to translate>' }]);
-               setIsLoading(false);
-               return;
-            }
-            response = await translateText({ targetLanguage, text: textToTranslate.join(' ') });
-            response.content = response.translatedText;
-            break;
-          }
-          case 'transcribe':
-             if (!dataUri) throw new Error('Please attach an audio file or record audio to transcribe.');
-             response = await transcribeAudio({ audioDataUri: dataUri });
-             response.content = response.transcript;
-             break;
-          default:
-             throw new Error(`Unknown command: /${command}`);
-        }
-      } else {
-         const inputPayload: ChatInput = {
-          message: currentInput,
-          history: messages.map(m => ({
+      const historyForApi = messageHistory
+        .filter(m => !m.error) // Exclude previous errors from history
+        .map(m => ({
             role: m.role,
             content: [{ text: m.content }],
-          })),
-          userRole: getRole(),
-        };
-        response = await chat(inputPayload);
-      }
+        }));
+      
+      const inputPayload: ChatInput = {
+        message: messageContent,
+        history: historyForApi,
+        userRole: getRole(),
+      };
 
-      const modelMessage: Message = { role: 'model', ...response };
+      const response = await chat(inputPayload);
+
+      const modelMessage: Message = {
+        id: `model-${Date.now()}`,
+        role: 'model',
+        content: response.content,
+        avatar: botAvatar,
+        name: 'LegalAI',
+      };
       setMessages(prev => [...prev, modelMessage]);
 
     } catch (error: any) {
       console.error('AI task failed:', error);
-      const errorMessage : Message = {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
         role: 'model',
-        content: 'An error occurred: ' + error.message || 'Failed to complete the request. Please try again later.'
-      }
+        content: "⚠️ API failed. Please try again.",
+        avatar: botAvatar,
+        name: 'LegalAI',
+        error: true,
+      };
       setMessages(prev => [...prev, errorMessage]);
-      toast({
-        variant: 'destructive',
-        title: 'An error occurred',
-        description: error.message || 'Failed to complete the request. Please try again later.',
-      });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleRetry = (messageId: string) => {
+    // Find the user message that came before the failed bot response
+    const failedMessageIndex = messages.findIndex(m => m.id === messageId);
+    if (failedMessageIndex === -1 || failedMessageIndex === 0) return;
+
+    const userMessageToRetry = messages[failedMessageIndex - 1];
+    if (userMessageToRetry.role !== 'user') return;
+
+    // Remove the error message from the state
+    const messagesBeforeFailure = messages.slice(0, failedMessageIndex);
+    setMessages(messagesBeforeFailure);
+    
+    // Resend the user's message
+    sendMessage(userMessageToRetry.content, messagesBeforeFailure);
+  };
   
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeTask(input, file);
+    sendMessage(input, messages);
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1">
+    <div className="flex flex-col h-full bg-background">
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="p-4 md:p-6">
-        {messages.length === 0 ? (
+        {messages.length === 0 && !isLoading ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <Logo iconClassName="size-16 text-primary" textClassName="text-5xl" />
-            <p className="mt-4 text-muted-foreground">How can I help you today?</p>
+            <div className="p-4 bg-primary/10 rounded-full">
+                <Bot className="w-10 h-10 text-primary" />
+            </div>
+            <p className="mt-4 text-lg font-semibold text-foreground">How can I help you today?</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {messages.map((message, index) => (
-              <MemoizedMessage key={index} message={message} />
+            {messages.map((message) => (
+              <MemoizedMessage key={message.id} message={message} onRetry={handleRetry} />
             ))}
              {isLoading && (
-              <div className="flex items-start gap-4">
-                <Avatar className="w-8 h-8 border-2 border-primary/50">
-                  <AvatarFallback className="bg-primary/20"><Scale className="w-4 h-4 text-primary" /></AvatarFallback>
+              <div className="flex items-start gap-3">
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={botAvatar} alt="LegalAI" />
+                    <AvatarFallback>L</AvatarFallback>
                 </Avatar>
-                <div className="max-w-2xl rounded-lg px-4 py-3 bg-muted flex items-center">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                <div className="max-w-lg rounded-xl px-4 py-2.5 bg-card text-card-foreground shadow-sm">
+                  <TypingIndicator />
                 </div>
               </div>
             )}
@@ -411,10 +242,9 @@ export function AssistantChat() {
 
       <div className="border-t bg-background px-4 py-3">
         <form onSubmit={handleFormSubmit} className="relative">
-          <CommandMenu input={input} setInput={setInput} />
           <Textarea
-            placeholder="Ask LegalAI anything... or type '/' for commands"
-            className="pr-28 pl-10 min-h-[48px] resize-none"
+            placeholder="Ask anything..."
+            className="pr-24 pl-10 py-3 min-h-[52px] resize-none"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -425,87 +255,18 @@ export function AssistantChat() {
             }}
           />
           <div className="absolute top-1/2 -translate-y-1/2 left-3 flex items-center">
-             <label htmlFor="file-upload-chat">
-              <Paperclip className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary" />
-            </label>
-            <input id="file-upload-chat" type="file" className="hidden" onChange={handleFileChange}/>
+             <Button type="button" size="icon" variant="ghost">
+                <Paperclip className="h-5 w-5 text-muted-foreground" />
+             </Button>
           </div>
-          <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-2">
-            <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={isRecording ? stopRecording : startRecording}
-                className={isRecording ? 'bg-red-500 hover:bg-red-600 text-white' : ''}
-              >
-                <Mic className="h-5 w-5" />
-            </Button>
-            <Button type="submit" size="icon" disabled={isLoading || (!input && !file)}>
-              <Send className="h-5 w-5" />
+          <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center">
+            <Button type="submit" size="sm" disabled={isLoading || !input.trim()}>
+              <Send className="h-4 w-4 mr-2" />
+              Send
             </Button>
           </div>
         </form>
-         {file && (
-            <div className="mt-2 flex items-center gap-2 text-sm bg-muted/50 p-2 rounded-md">
-              <FileText className="h-4 w-4"/>
-              <span>{file.name}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => setFile(null)}>
-                <X className="h-4 w-4"/>
-              </Button>
-            </div>
-          )}
       </div>
-    </div>
-  );
-}
-
-function SearchResultTable({ result }: { result: SearchCaseLawOutput }) {
-  if (!result || !result.results || result.results.length === 0) {
-    return <p>No case law results found.</p>;
-  }
-  return (
-    <div className="my-4">
-        <p className="text-sm mb-2">Found {result.results.length} relevant cases:</p>
-        <Card>
-            <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead>Case Title & Citation</TableHead>
-                <TableHead>Court</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {result.results.map(res => (
-                <TableRow key={res.id}>
-                    <TableCell>
-                    <div className="font-medium hover:underline text-primary">
-                        <Link href="#">{res.title}</Link>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                        {res.citation}
-                    </div>
-                    </TableCell>
-                    <TableCell>{res.court}</TableCell>
-                    <TableCell>{res.date}</TableCell>
-                    <TableCell>
-                    <Badge
-                        variant={
-                        res.status === 'Landmark'
-                            ? 'default'
-                            : res.status === 'Overruled' ? 'destructive' : 'secondary'
-                        }
-                        className={res.status === 'Landmark' ? 'bg-accent text-accent-foreground' : ''}
-                    >
-                        {res.status}
-                    </Badge>
-                    </TableCell>
-                </TableRow>
-                ))}
-            </TableBody>
-            </Table>
-        </Card>
     </div>
   );
 }

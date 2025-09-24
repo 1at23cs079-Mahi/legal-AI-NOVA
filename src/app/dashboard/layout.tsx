@@ -9,13 +9,15 @@ import { DashboardHeader } from '@/components/dashboard/header';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
         <DashboardSidebar />
-        <SidebarInset>
-            <DashboardHeader />
-            <main className="flex-1 p-4 md:p-8">
-                {children}
-            </main>
-        </SidebarInset>
+        <div className="flex flex-col flex-1">
+          <DashboardHeader />
+          <main className="flex-1 overflow-hidden">
+            {children}
+          </main>
+        </div>
+      </div>
     </SidebarProvider>
   );
 }

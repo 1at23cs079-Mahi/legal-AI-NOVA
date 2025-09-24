@@ -8,32 +8,32 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Search, Sparkles, User, LogOut, LifeBuoy, Sun, Moon } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useTheme } from '@/app/layout';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Logo } from '../icons/logo';
+import { Sun, Moon, User, LogOut, LifeBuoy, Bot, Maximize, Minimize2 } from 'lucide-react';
+import { useState } from 'react';
 
+const llms = [
+    { id: 'gpt-4', name: 'GPT-4' },
+    { id: 'custom-llm', name: 'Custom LLM' },
+];
 
 export function DashboardHeader() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const [selectedLlm, setSelectedLlm] = useState(llms[0].id);
 
   const role = searchParams.get('role') || 'public';
   const name = searchParams.get('name') || 'User';
@@ -60,40 +60,33 @@ export function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+      <SidebarTrigger className="md:hidden" />
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden" />
-        <h1 className="font-headline text-xl font-semibold hidden md:block">
-          Dashboard
-        </h1>
+        <Bot className="h-6 w-6 text-primary" />
+        <h1 className="text-lg font-semibold font-headline">LegalAI Chat</h1>
       </div>
 
-      <div className="flex flex-1 items-center justify-end gap-4">
-        <div className="relative flex-1 max-w-lg ml-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search judgments, statutes, cases..."
-            className="pl-9"
-          />
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <Badge
-                    variant="secondary"
-                    className="cursor-help bg-accent/20 border border-accent/50 text-accent-foreground"
-                  >
-                    <Sparkles className="mr-1 h-3 w-3 text-accent" />
-                    RAG
-                  </Badge>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Results grounded to sources — citations shown.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+      <div className="flex flex-1 items-center justify-end gap-2">
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[150px] justify-between">
+                    {llms.find(llm => llm.id === selectedLlm)?.name}
+                    <Bot className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[150px]">
+                <DropdownMenuLabel>Select LLM</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={selectedLlm} onValueChange={setSelectedLlm}>
+                    {llms.map(llm => (
+                        <DropdownMenuRadioItem key={llm.id} value={llm.id}>{llm.name}</DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button variant="ghost" size="icon"><Minimize2 className="h-4 w-4"/></Button>
+        <Button variant="ghost" size="icon"><Maximize className="h-4 w-4"/></Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
