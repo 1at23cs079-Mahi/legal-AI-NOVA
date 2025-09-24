@@ -249,8 +249,10 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="mt-4 text-center text-sm">
-            Need an account?{' '}
-            <span className="text-muted-foreground">Contact an admin</span>
+            Don't have an account?{' '}
+            <Link href="/register" className="underline">
+              Create an account
+            </Link>
           </div>
         </CardContent>
       </Card>
