@@ -132,8 +132,21 @@ export default function DashboardPage() {
   const name = searchParams.get('name') || 'User';
 
   const { welcome, description, quickAccess } = useMemo(() => {
-    return roleConfig[role as keyof typeof roleConfig] || roleConfig.public;
-  }, [role]);
+    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.public;
+    let finalWelcome = config.welcome;
+
+    if (name && name !== 'User') {
+      if (role === 'advocate') {
+        finalWelcome = `Welcome back, ${name}!`;
+      } else if (role === 'student') {
+        finalWelcome = `Welcome, ${name}!`;
+      } else {
+        finalWelcome = `Welcome, ${name}!`;
+      }
+    }
+    
+    return { ...config, welcome: finalWelcome };
+  }, [role, name]);
 
   const recentActivities = [
     {
@@ -157,7 +170,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-8 animate-fade-in">
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight font-headline">
-          {welcome.replace('Advocate', name).replace('Student', name)}
+          {welcome}
         </h2>
         <p className="text-muted-foreground">
           {description}

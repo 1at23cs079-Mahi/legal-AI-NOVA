@@ -31,13 +31,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSuccessfulLogin = async (user: any) => {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    let name = user.displayName;
+    let name = user.displayName || 'User';
     let role = 'public'; // default
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      name = userData.name;
-      role = userData.role;
+
+    try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          name = userData.name;
+          role = userData.role;
+        }
+    } catch (e) {
+        console.error("Error fetching user data from Firestore:", e);
     }
     
     toast({
