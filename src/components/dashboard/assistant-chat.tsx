@@ -145,12 +145,13 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
         name: name,
     };
     
-    setMessages(prev => [...prev, newUserMessage]);
+    const updatedMessages = [...messageHistory, newUserMessage];
+    setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
 
     try {
-      const historyForApi = messageHistory
+      const historyForApi = updatedMessages
         .filter(m => !m.error) // Exclude previous errors from history
         .map(m => ({
             role: m.role,
@@ -159,7 +160,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
       
       const inputPayload: ChatInput = {
         message: messageContent,
-        history: historyForApi,
+        history: historyForApi.slice(0, -1), // Pass all but the latest message as history
         userRole: getRole(),
         model: selectedLlm,
       };
@@ -199,8 +200,8 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     const userMessageToRetry = messages[failedMessageIndex - 1];
     if (userMessageToRetry.role !== 'user') return;
 
-    // Remove the error message from the state
-    const messagesBeforeFailure = messages.slice(0, failedMessageIndex);
+    // Remove the error message and the user message that caused it
+    const messagesBeforeFailure = messages.slice(0, failedMessageIndex - 1);
     setMessages(messagesBeforeFailure);
     
     // Resend the user's message
