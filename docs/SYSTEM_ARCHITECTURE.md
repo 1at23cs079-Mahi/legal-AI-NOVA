@@ -27,6 +27,14 @@ The system is designed with four distinct user roles, each with tailored interac
 *   **Dashboard Navigation**: Users navigate through a persistent sidebar that provides access to core features like AI chat, document review, and case law search.
 *   **Admin Navigation**: Admins have a separate, secure layout with its own sidebar for navigating between the admin dashboard and user management pages.
 
+### Typical Data Flow (Example: User Registration)
+
+1.  **UI Form Submission**: A user fills out the registration form in the Next.js frontend (`src/app/register/page.tsx`).
+2.  **Frontend Validation**: The data is validated on the client-side using `zod` to ensure all fields (name, email, password) meet the required format.
+3.  **Backend Request**: Upon successful validation, a request is sent to the backend. In this architecture, this is a direct call to Firebase Authentication (`createUserWithEmailAndPassword`) from a Client Component.
+4.  **Database Storage**: After the user is created in Firebase Authentication, a corresponding user document is created in the Firestore `users` collection with a normalized schema.
+5.  **UI Response**: A response is sent back to the user interface, which then shows a success toast notification and redirects the user to the login page.
+
 ### Technology Stack
 
 *   **Frontend Framework**: Next.js (with React)
