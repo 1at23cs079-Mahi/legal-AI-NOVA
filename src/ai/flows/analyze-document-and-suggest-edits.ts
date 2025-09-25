@@ -20,22 +20,21 @@ const AnalyzeDocumentAndSuggestEditsInputSchema = z.object({
     .describe(
       "A legal document as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. Supported file types: PDF, DOCX, TXT."
     ),
+  outputFormat: z.enum(['paragraph', 'bullet_points', 'table']).describe('The desired format for the analysis output.'),
 });
 export type AnalyzeDocumentAndSuggestEditsInput = z.infer<
   typeof AnalyzeDocumentAndSuggestEditsInputSchema
 >;
 
 const AnalysisResultSchema = z.object({
-    annotatedClauses: z.string().describe("A summary of the key clauses identified in the document."),
-    suggestedEdits: z.string().describe("Specific redline edits suggested for the flagged clauses. Provide actionable and clear suggestions."),
-    matchingPrecedent: z.string().describe("Relevant legal precedents that match or support the suggested edits for each flagged clause, found using the provided search tool."),
+    analysis: z.string().describe("The full analysis of the document, formatted as requested by the user (paragraph, bullet_points, or table). This should include annotated clauses, suggested edits, and matching precedents all in one structured response."),
 });
 
 const AnalyzeDocumentAndSuggestEditsOutputSchema = z.object({
   analysisResults: z
     .string()
     .describe(
-      'A JSON string containing the analysis results. The JSON object should have three keys: "annotatedClauses", "suggestedEdits", and "matchingPrecedent".'
+      'A JSON string containing the analysis results. The JSON object should have a single key: "analysis".'
     ),
 });
 export type AnalyzeDocumentAndSuggestEditsOutput = z.infer<
@@ -82,19 +81,25 @@ const analyzeDocumentAndSuggestEditsPrompt = ai.definePrompt({
   prompt: `You are an expert legal analyst. Your task is to perform a Retrieval-Augmented Generation (RAG) analysis on the provided legal document.
 
 Document to Analyze: {{media url=documentDataUri}}
+Requested Output Format: {{{outputFormat}}}
 
 Please perform the following actions in a two-step process:
 1.  **Analyze and Identify**: First, carefully review the document to identify key clauses, potential risks, and areas for improvement. Focus on liability, termination, payment terms, and intellectual property.
 
 2.  **Retrieve and Synthesize**: For each clause you identify as potentially problematic or ambiguous, use the 'legalSearch' tool to find relevant legal precedents or statutes from the knowledge base.
 
-3.  **Generate Output**: Based on your analysis and the retrieved information, generate the final output. Your suggestions MUST be supported by the precedents you find.
+3.  **Generate Output**: Based on your analysis and the retrieved information, generate a single, unified analysis that includes:
+    - **Annotated Clauses**: A summary of the key clauses identified.
+    - **Suggested Redline Edits**: Specific, clear edits for problematic clauses.
+    - **Matching Precedent**: The relevant legal precedents retrieved from the 'legalSearch' tool that support your recommendations. Cite the sources.
 
-    - **Annotate Clauses**: Summarize the key clauses identified.
-    - **Suggest Redline Edits**: Suggest specific, clear edits for problematic clauses.
-    - **Find Matching Precedent**: Provide the relevant legal precedents retrieved from the 'legalSearch' tool that support your recommendations. Cite the sources.
+You MUST format your entire response according to the 'Requested Output Format'.
 
-Return your entire analysis as a single JSON object with the keys "annotatedClauses", "suggestedEdits", and "matchingPrecedent". Do not include any other text or formatting in your response.
+- If 'paragraph', provide a detailed, narrative-style report.
+- If 'bullet_points', use clear headings and nested bullet points for each section (Clauses, Edits, Precedents).
+- If 'table', create a well-structured Markdown table with columns for "Clause", "Issue", "Suggested Edit", and "Supporting Precedent".
+
+Return your entire analysis as a single JSON object with one key: "analysis". Do not include any other text or formatting in your response.
 
 **Disclaimer**: The analysis provided is for informational purposes only and does not constitute legal advice. It is an automated review and may contain errors or omissions. Always consult with a qualified legal professional for advice on your specific situation. LegalAI is not liable for any actions taken based on this analysis.
 `,
@@ -119,4 +124,3 @@ const analyzeDocumentAndSuggestEditsFlow = ai.defineFlow(
     };
   }
 );
-

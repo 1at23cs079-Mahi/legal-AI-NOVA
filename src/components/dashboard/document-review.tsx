@@ -18,6 +18,7 @@ import {
   UploadCloud,
   File as FileIcon,
   X,
+  FileText
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -25,19 +26,20 @@ import {
   AnalyzeDocumentAndSuggestEditsInput,
 } from '@/ai/flows/analyze-document-and-suggest-edits';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type AnalysisResult = {
-  annotatedClauses: string;
-  suggestedEdits: string;
-  matchingPrecedent: string;
+  analysis: string;
 };
+
+type OutputFormat = 'paragraph' | 'bullet_points' | 'table';
 
 export function DocumentReview() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('paragraph');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,10 +85,12 @@ export function DocumentReview() {
 
     try {
       const documentDataUri = await fileToDataUri(file);
-      const input: AnalyzeDocumentAndSuggestEditsInput = { documentDataUri };
+      const input: AnalyzeDocumentAndSuggestEditsInput = { 
+        documentDataUri,
+        outputFormat 
+      };
       const response = await analyzeDocumentAndSuggestEdits(input);
 
-      // The flow returns a JSON string, so we need to parse it.
       const parsedResult = JSON.parse(response.analysisResults) as AnalysisResult;
       setResult(parsedResult);
 
@@ -166,7 +170,21 @@ export function DocumentReview() {
               )}
             </div>
             
-            <Button onClick={handleReview} disabled={isLoading} className="w-full">
+            <div className="grid gap-2">
+                <Label htmlFor="output-format">Output Format</Label>
+                <Select value={outputFormat} onValueChange={(value) => setOutputFormat(value as OutputFormat)}>
+                    <SelectTrigger id="output-format" className="w-full">
+                        <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="paragraph">Paragraph</SelectItem>
+                        <SelectItem value="bullet_points">Bullet Points</SelectItem>
+                        <SelectItem value="table">Table</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <Button onClick={handleReview} disabled={isLoading || !file} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -182,8 +200,13 @@ export function DocumentReview() {
 
       <div className="flex flex-col">
         <Card className="flex-1 flex flex-col">
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Analysis Result</CardTitle>
+             {result && (
+              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.analysis)}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
             <ScrollArea className="h-full w-full">
@@ -195,38 +218,13 @@ export function DocumentReview() {
                   </div>
                 </div>
               ) : result ? (
-                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger>Annotated Clauses</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
-                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.annotatedClauses)}><Copy className="h-3 w-3"/></Button>
-                        {result.annotatedClauses}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-2">
-                    <AccordionTrigger>Suggested Edits</AccordionTrigger>
-                    <AccordionContent>
-                       <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
-                         <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.suggestedEdits)}><Copy className="h-3 w-3"/></Button>
-                        {result.suggestedEdits}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-3">
-                    <AccordionTrigger>Matching Precedent</AccordionTrigger>
-                    <AccordionContent>
-                       <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
-                         <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.matchingPrecedent)}><Copy className="h-3 w-3"/></Button>
-                        {result.matchingPrecedent}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                 <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
+                    {result.analysis}
+                  </div>
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <div className="text-center text-muted-foreground">
+                  <div className="text-center text-muted-foreground space-y-4">
+                    <FileText className="w-12 h-12 mx-auto text-primary/50" />
                     <p>The analysis of your document will appear here.</p>
                   </div>
                 </div>
