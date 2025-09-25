@@ -27,6 +27,7 @@ import {
 } from '@/ai/flows/analyze-document-and-suggest-edits';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '../ui/textarea';
 
 type AnalysisResult = {
   analysis: string;
@@ -40,6 +41,7 @@ export function DocumentReview() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('paragraph');
+  const [userQuery, setUserQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +89,8 @@ export function DocumentReview() {
       const documentDataUri = await fileToDataUri(file);
       const input: AnalyzeDocumentAndSuggestEditsInput = { 
         documentDataUri,
-        outputFormat 
+        outputFormat,
+        userQuery: userQuery.trim() || undefined,
       };
       const response = await analyzeDocumentAndSuggestEdits(input);
 
@@ -168,6 +171,17 @@ export function DocumentReview() {
                   </Button>
                 </div>
               )}
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="user-query">Specific Instructions (Optional)</Label>
+                <Textarea
+                    id="user-query"
+                    placeholder="e.g., 'Focus on the liability and termination clauses.' or 'Check for compliance with recent regulations.'"
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    className="min-h-[80px]"
+                />
             </div>
             
             <div className="grid gap-2">

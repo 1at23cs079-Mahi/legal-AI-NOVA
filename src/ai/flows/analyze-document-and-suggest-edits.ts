@@ -21,6 +21,7 @@ const AnalyzeDocumentAndSuggestEditsInputSchema = z.object({
       "A legal document as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'. Supported file types: PDF, DOCX, TXT."
     ),
   outputFormat: z.enum(['paragraph', 'bullet_points', 'table']).describe('The desired format for the analysis output.'),
+  userQuery: z.string().optional().describe('A specific instruction or question from the user to guide the analysis.'),
 });
 export type AnalyzeDocumentAndSuggestEditsInput = z.infer<
   typeof AnalyzeDocumentAndSuggestEditsInputSchema
@@ -82,9 +83,12 @@ const analyzeDocumentAndSuggestEditsPrompt = ai.definePrompt({
 
 Document to Analyze: {{media url=documentDataUri}}
 Requested Output Format: {{{outputFormat}}}
+{{#if userQuery}}
+User's Specific Request: "{{{userQuery}}}"
+{{/if}}
 
 Please perform the following actions in a two-step process:
-1.  **Analyze and Identify**: First, carefully review the document to identify key clauses, potential risks, and areas for improvement. Focus on liability, termination, payment terms, and intellectual property.
+1.  **Analyze and Identify**: First, carefully review the document to identify key clauses, potential risks, and areas for improvement. {{#if userQuery}}Prioritize the user's specific request in your analysis.{{else}}Focus on liability, termination, payment terms, and intellectual property.{{/if}}
 
 2.  **Retrieve and Synthesize**: For each clause you identify as potentially problematic or ambiguous, use the 'legalSearch' tool to find relevant legal precedents or statutes from the knowledge base.
 
