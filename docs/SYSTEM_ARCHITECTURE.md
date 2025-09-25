@@ -57,3 +57,61 @@ The system is designed with four distinct user roles, each with tailored interac
 *   **Transactional & System Data**: The application does not currently have dedicated Firestore collections for `cases`, `transactions`, `logs`, or `analytics`. The dashboards use placeholder data.
 
 *   **External Data**: The primary external integration is with Google's AI services, managed via the **Genkit** library.
+
+### System Wireframes and Data Elements
+
+This section provides a conceptual blueprint of the application's user interface and its underlying data structure.
+
+#### 1. Authentication Wireframes
+
+These screens handle user access and onboarding.
+
+*   **Login Screen (`/login`)**
+    *   **UI Components**: Email Input, Password Input, "Remember Me" Checkbox, Sign-In Button, Social Login Buttons (Google, GitHub), "Forgot Password" Link.
+    *   **Data Elements**: `email` (string), `password` (string), `rememberMe` (boolean)
+
+*   **Registration Screen (`/register`)**
+    *   **UI Components**: First Name Input, Last Name Input, Email Input, Password Input, Create Account Button.
+    *   **Data Elements**: `firstName` (string), `lastName` (string), `email` (string), `password` (string)
+
+*   **Welcome/Landing Screen (`/`)**
+    *   **UI Components**: Application Logo, Welcome Text, "Get Started" Button (links to Login).
+    *   **Data Elements**: None (static page).
+
+#### 2. Main Application Wireframes
+
+These are the core screens users interact with after logging in.
+
+*   **Main Dashboard (`/dashboard`)**
+    *   **Description**: A role-based landing page that provides quick access to key features.
+    *   **UI Components**: Welcome Message, Role-specific "Quick Access" Cards, "Recent Activity" list.
+    *   **Data Elements**: `user.name` (string), `user.role` (string), `recentActivities` (array - currently static)
+
+*   **LegalAI Chat (`/dashboard/case-management`)**
+    *   **Description**: The primary conversational interface for interacting with the AI.
+    *   **UI Components**: Chat Message History, Text Input with Command Menu (`/draft`, `/search`), Send Button, File Attachment Icon.
+    *   **Data Elements**: `message` (string), `history` (array), `user.role` (string), `selectedLlm` (string)
+
+*   **Document Review (`/dashboard/document-review`)**
+    *   **Description**: Allows users to upload documents for AI-powered analysis.
+    *   **UI Components**: File Upload Area, Text Area for instructions, "Analyze Document" Button, Results Panel.
+    *   **Data Elements**: `documentDataUri` (string), `userQuery` (string), `analysisResults` (string)
+
+*   **Case Law Search (`/dashboard/search`)**
+    *   **Description**: A dedicated interface for searching the legal database.
+    *   **UI Components**: Search Input, Filter Inputs (Court, Judge, Year), Search Button, Results Table.
+    *   **Data Elements**: `query` (string), `filters` (object), `results` (array of `CaseLaw` objects)
+
+#### 3. Admin-Specific Wireframes
+
+These screens are for administrators to manage the application.
+
+*   **Admin Dashboard (`/admin/dashboard`)**
+    *   **Description**: An at-a-glance view of platform usage and analytics.
+    *   **UI Components**: Stat Cards (Total Users), User Growth Chart, "Recent Signups" List.
+    *   **Data Elements**: (Currently uses placeholder data) `totalUsers` (number), `newSignups` (number)
+
+*   **User Management (`/admin/users`)**
+    *   **Description**: A real-time table for viewing and managing all users.
+    *   **UI Components**: User Search Bar, Table of Users, Action Menu (Edit, Delete).
+    *   **Data Elements**: `users` (array of `User` objects from Firestore)
