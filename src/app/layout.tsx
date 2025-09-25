@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { PT_Sans, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, createContext, useContext } from 'react';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const fontSans = PT_Sans({
   subsets: ['latin'],
@@ -67,10 +68,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn('font-sans antialiased', fontSans.variable, fontHeadline.variable)}>
-        <ThemeProvider>
-            {children}
-            <Toaster />
-        </ThemeProvider>
+        <FirebaseClientProvider>
+          <ThemeProvider>
+              {children}
+              <Toaster />
+          </ThemeProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

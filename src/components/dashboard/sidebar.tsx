@@ -25,7 +25,7 @@ import { Logo } from '@/components/icons/logo';
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { ScrollArea } from '../ui/scroll-area';
 
 const conversations = [
@@ -42,6 +42,7 @@ export function DashboardSidebar() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { auth } = useFirebase();
 
   const role = searchParams.get('role');
   const name = searchParams.get('name');
@@ -54,6 +55,7 @@ export function DashboardSidebar() {
   const queryString = preservedSearchParams.toString();
   
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await auth.signOut();
       toast({

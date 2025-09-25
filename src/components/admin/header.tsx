@@ -25,13 +25,15 @@ import Link from 'next/link';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 
 export function AdminHeader() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth } = useFirebase();
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await auth.signOut();
       toast({

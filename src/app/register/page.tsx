@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Logo } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
@@ -41,6 +41,7 @@ const formSchema = z.object({
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth, db } = useFirebase();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -55,6 +56,15 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    if (!auth || !db) {
+        toast({
+            variant: 'destructive',
+            title: 'Service Error',
+            description: 'Could not connect to Firebase services.',
+        });
+        setIsLoading(false);
+        return;
+    }
     try {
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(

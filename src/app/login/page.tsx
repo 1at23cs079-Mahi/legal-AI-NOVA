@@ -20,12 +20,13 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth, db } = useFirebase();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -33,6 +34,14 @@ export default function LoginPage() {
   const [socialLoading, setSocialLoading] = useState<'google' | 'github' | null>(null);
 
   const handleSuccessfulLogin = async (user: any) => {
+    if (!db) {
+        toast({
+            variant: 'destructive',
+            title: 'Database Error',
+            description: 'Could not connect to the database.',
+        });
+        return;
+    }
     let name = user.displayName || 'User';
     let role = 'public'; // default
 
@@ -75,6 +84,16 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'Could not connect to authentication service.',
+        });
+        setIsLoading(false);
+        return;
+    }
 
     // --- DEMO MODE ---
     if (password === 'password') {
@@ -131,6 +150,16 @@ export default function LoginPage() {
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setSocialLoading(provider);
+    if (!auth || !db) {
+         toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'Could not connect to authentication service.',
+        });
+        setSocialLoading(null);
+        return;
+    }
+
     const authProvider = provider === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider();
     try {
       const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
@@ -161,6 +190,14 @@ export default function LoginPage() {
 
 
   const handleForgotPassword = async () => {
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'Could not connect to authentication service.',
+        });
+        return;
+    }
     if (!email) {
       toast({
         variant: 'destructive',

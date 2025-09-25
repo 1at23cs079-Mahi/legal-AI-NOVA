@@ -1,4 +1,6 @@
-// Import the functions you need from the SDKs you need
+// This file is deprecated and will be removed in a future update.
+// Please use the provider and hooks from '@/firebase' instead.
+
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";

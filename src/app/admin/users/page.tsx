@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -28,10 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, PlusCircle, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { collection, onSnapshot, query } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, type User as FirebaseAuthUser } from 'firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 type User = {
   uid: string;
@@ -42,50 +41,24 @@ type User = {
 };
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user: authUser, isLoading: isAuthLoading } = useUser();
+  const firestore = useFirestore();
+  
+  const usersQuery = useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'users');
+  }, [firestore]);
+
+  const { data: users = [], isLoading: isUsersLoading, error } = useCollection<User>(usersQuery);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
-
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setAuthUser(user);
-      } else {
-        setAuthUser(null);
-        setIsLoading(false);
-        setError("You must be logged in to view users.");
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, []);
-
-  useEffect(() => {
-    if (!authUser) return;
-
-    setIsLoading(true);
-    const usersQuery = query(collection(db, 'users'));
-    
-    const unsubscribeFirestore = onSnapshot(usersQuery, (snapshot) => {
-      const userList = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
-      setUsers(userList);
-      setIsLoading(false);
-      setError(null);
-    }, (err) => {
-      console.error("Error fetching users: ", err);
-      setError("Failed to fetch users. Please check your connection or permissions.");
-      setIsLoading(false);
-    });
-
-    return () => unsubscribeFirestore();
-  }, [authUser]);
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  
+  const isLoading = isAuthLoading || isUsersLoading;
 
   return (
     <div className="flex flex-col w-full">
@@ -93,7 +66,7 @@ export default function AdminUsersPage() {
           <div className="flex items-center">
                 <h1 className="text-lg font-semibold md:text-2xl">Users</h1>
                 <div className="ml-auto flex items-center gap-2">
-                    <Button size="sm" className="h-8 gap-1">
+                    <Button size="sm" className="h-8 gap-1" disabled={isLoading}>
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                             Add User
@@ -145,7 +118,16 @@ export default function AdminUsersPage() {
                                         <div className="flex flex-col items-center gap-2">
                                             <AlertTriangle className="h-8 w-8" />
                                             <p className="font-semibold">An Error Occurred</p>
-                                            <p className="text-sm">{error}</p>
+                                            <p className="text-sm">{error.message}</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : !authUser ? (
+                                 <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-muted-foreground py-10">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <AlertTriangle className="h-8 w-8" />
+                                            <p>You must be logged in to view users.</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
