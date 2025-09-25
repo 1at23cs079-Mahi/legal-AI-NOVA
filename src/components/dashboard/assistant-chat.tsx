@@ -157,7 +157,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     setIsLoading(true);
 
     try {
-      const historyForApi = updatedMessages
+      const historyForApi = messageHistory
         .filter(m => !m.error) // Exclude previous errors from history
         .map(m => ({
             role: m.role,
@@ -166,7 +166,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
       
       const inputPayload: ChatInput = {
         message: messageContent,
-        history: historyForApi.slice(0, -1), // Pass all but the latest message as history
+        history: historyForApi, // Pass the clean history
         userRole: getRole(),
         model: selectedLlm,
       };
@@ -178,7 +178,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
         role: 'model',
         content: response.content,
         avatar: botAvatar,
-        name: 'LegalAI',
+        name: 'Lexica',
       };
       setMessages(prev => [...prev, modelMessage]);
 
@@ -189,7 +189,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
         role: 'model',
         content: "⚠️ API failed. Please try again.",
         avatar: botAvatar,
-        name: 'LegalAI',
+        name: 'Lexica',
         error: true,
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -238,7 +238,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
              {isLoading && (
               <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={botAvatar} alt="LegalAI" />
+                    <AvatarImage src={botAvatar} alt="Lexica" />
                     <AvatarFallback>L</AvatarFallback>
                 </Avatar>
                 <div className="max-w-lg rounded-xl px-4 py-2.5 bg-card text-card-foreground shadow-sm">

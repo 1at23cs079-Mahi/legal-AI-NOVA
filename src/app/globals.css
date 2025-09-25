@@ -10,31 +10,31 @@
     --card-foreground: 222.2 47.4% 11.2%;
     --popover: 210 40% 98%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 221.2 83.2% 53.3%; /* #2563eb - Navy Blue */
+    --primary: 266 100% 28%; /* #4B0082 - Deep Indigo */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%; /* #f1f5f9 */
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%; /* #64748b */
-    --accent: 221.2 83.2% 53.3%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 100% 50%; /* #FFD700 - Gold */
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 266 100% 28%;
     --radius: 0.75rem; /* 12px */
 
-    /* Custom styles from PRD */
+    /* Custom styles */
     --sidebar-background: 210 40% 96.1%;
     --sidebar-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 85%;
-    --sidebar-accent: 221.2 83.2% 53.3%;
+    --sidebar-accent: 266 100% 28%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary: 266 100% 28%;
     --sidebar-primary-foreground: 210 40% 98%;
 
-    --user-bubble-bg: linear-gradient(to right, hsl(221.2, 83.2%, 53.3%), hsl(221.2, 83.2%, 63.3%));
+    --user-bubble-bg: linear-gradient(to right, hsl(266, 100%, 28%), hsl(266, 100%, 38%));
     --user-bubble-foreground: 0 0% 100%;
     --bot-bubble-bg: 220 6% 90%; /* #e5e7eb */
     --bot-bubble-foreground: 222 22% 9%;
@@ -47,30 +47,30 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 188 83% 48%; /* #16d3e8 - Vibrant Cyan */
+    --primary: 266 100% 70%; /* Lighter Indigo for dark mode */
     --primary-foreground: 222 47% 11%;
     --secondary: 217.2 32.6% 17.5%; /* #1e293b */
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215.4 16.3% 56.9%; /* #8f9ba9 */
-    --accent: 188 83% 48%;
+    --accent: 45 100% 50%; /* #FFD700 - Gold */
     --accent-foreground: 222 47% 11%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 188 83% 48%;
+    --ring: 266 100% 70%;
 
-    /* Custom styles from PRD */
+    /* Custom styles */
     --sidebar-background: 222 47% 9%; /* Darker sidebar */
     --sidebar-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 15%;
-    --sidebar-accent: 188 83% 48%;
+    --sidebar-accent: 266 100% 70%;
     --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-primary: 188 83% 48%;
+    --sidebar-primary: 266 100% 70%;
     --sidebar-primary-foreground: 222 47% 11%;
 
-    --user-bubble-bg: linear-gradient(to right, hsl(188, 83%, 48%), hsl(188, 83%, 58%));
+    --user-bubble-bg: linear-gradient(to right, hsl(266, 100%, 70%), hsl(266, 100%, 80%));
     --user-bubble-foreground: 222 47% 11%;
     --bot-bubble-bg: 217.2 32.6% 25%; /* #334155 */
     --bot-bubble-foreground: 0 0% 100%;
