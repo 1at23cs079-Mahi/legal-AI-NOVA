@@ -26,10 +26,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, type User as FirebaseAuthUser } from 'firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type User = {
@@ -43,25 +44,43 @@ type User = {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersCollection = collection(db, 'users');
-        const userSnapshot = await getDocs(usersCollection);
-        const userList = userSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
-        setUsers(userList);
-      } catch (error) {
-        console.error("Error fetching users: ", error);
-        // Handle error, maybe show a toast
-      } finally {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthUser(user);
+      } else {
+        setAuthUser(null);
         setIsLoading(false);
+        setError("You must be logged in to view users.");
       }
-    };
+    });
 
-    fetchUsers();
+    return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    if (!authUser) return;
+
+    setIsLoading(true);
+    const usersQuery = query(collection(db, 'users'));
+    
+    const unsubscribeFirestore = onSnapshot(usersQuery, (snapshot) => {
+      const userList = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+      setUsers(userList);
+      setIsLoading(false);
+      setError(null);
+    }, (err) => {
+      console.error("Error fetching users: ", err);
+      setError("Failed to fetch users. Please check your connection or permissions.");
+      setIsLoading(false);
+    });
+
+    return () => unsubscribeFirestore();
+  }, [authUser]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,7 +105,7 @@ export default function AdminUsersPage() {
                 <CardHeader>
                     <CardTitle>User Management</CardTitle>
                     <CardDescription>
-                        Manage all registered users in the system.
+                        Manage all registered users in the system. Updates in real-time.
                     </CardDescription>
                      <div className="pt-4">
                         <Input 
@@ -120,6 +139,16 @@ export default function AdminUsersPage() {
                                         <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
                                     </TableRow>
                                 ))
+                            ) : error ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-destructive py-10">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <AlertTriangle className="h-8 w-8" />
+                                            <p className="font-semibold">An Error Occurred</p>
+                                            <p className="text-sm">{error}</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 filteredUsers.map(user => (
                                     <TableRow key={user.uid}>
