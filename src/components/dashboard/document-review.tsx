@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,7 +18,6 @@ import {
   UploadCloud,
   File as FileIcon,
   X,
-  ChevronDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
