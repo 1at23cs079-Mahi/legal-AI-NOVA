@@ -2,7 +2,7 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/review-document.ts';
+import '@/ai/flows/analyze-document-and-suggest-edits.ts';
 import '@/ai/flows/draft-legal-petition.ts';
 import '@/ai/flows/generate-case-timeline.ts';
 import '@/ai/flows/search-case-law.ts';

@@ -19,18 +19,27 @@ import {
   UploadCloud,
   File as FileIcon,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { reviewDocument, ReviewDocumentInput } from '@/ai/flows/review-document';
+import {
+  analyzeDocumentAndSuggestEdits,
+  AnalyzeDocumentAndSuggestEditsInput,
+} from '@/ai/flows/analyze-document-and-suggest-edits';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+type AnalysisResult = {
+  annotatedClauses: string;
+  suggestedEdits: string;
+  matchingPrecedent: string;
+};
 
 export function DocumentReview() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [prompt, setPrompt] = useState<string>('');
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,23 +79,19 @@ export function DocumentReview() {
       });
       return;
     }
-    if (!prompt.trim()) {
-      toast({
-        variant: 'destructive',
-        title: 'No instructions provided',
-        description: 'Please tell me what you want to do with the document.',
-      });
-      return;
-    }
 
     setIsLoading(true);
     setResult(null);
 
     try {
       const documentDataUri = await fileToDataUri(file);
-      const input: ReviewDocumentInput = { documentDataUri, prompt };
-      const response = await reviewDocument(input);
-      setResult(response.result);
+      const input: AnalyzeDocumentAndSuggestEditsInput = { documentDataUri };
+      const response = await analyzeDocumentAndSuggestEdits(input);
+
+      // The flow returns a JSON string, so we need to parse it.
+      const parsedResult = JSON.parse(response.analysisResults) as AnalysisResult;
+      setResult(parsedResult);
+
     } catch (error: any) {
       console.error('Document review failed:', error);
       toast({
@@ -112,9 +117,9 @@ export function DocumentReview() {
       <div className="flex flex-col gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Document Review</CardTitle>
+            <CardTitle>Document Analysis</CardTitle>
             <CardDescription>
-              Upload a legal document and provide instructions for the AI.
+              Upload a legal document for AI-powered analysis, redline suggestions, and precedent matching.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -162,24 +167,15 @@ export function DocumentReview() {
                 </div>
               )}
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="instructions">Instructions</Label>
-              <Textarea
-                id="instructions"
-                placeholder="e.g., 'Summarize this document in three key points', 'Identify all clauses related to liability', 'Check for ambiguities in the termination clause'"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={5}
-              />
-            </div>
+            
             <Button onClick={handleReview} disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Reviewing...
+                  Analyzing...
                 </>
               ) : (
-                'Review Document'
+                'Analyze Document'
               )}
             </Button>
           </CardContent>
@@ -188,15 +184,10 @@ export function DocumentReview() {
 
       <div className="flex flex-col">
         <Card className="flex-1 flex flex-col">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Review Result</CardTitle>
-            {result && (
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(result)}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            )}
+          <CardHeader>
+            <CardTitle>Analysis Result</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1">
+          <CardContent className="flex-1 overflow-hidden">
             <ScrollArea className="h-full w-full">
               {isLoading ? (
                 <div className="flex h-full items-center justify-center">
@@ -206,13 +197,39 @@ export function DocumentReview() {
                   </div>
                 </div>
               ) : result ? (
-                <div className="prose prose-sm max-w-none text-sm text-foreground dark:prose-invert whitespace-pre-wrap">
-                  {result}
-                </div>
+                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger>Annotated Clauses</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
+                        <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.annotatedClauses)}><Copy className="h-3 w-3"/></Button>
+                        {result.annotatedClauses}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-2">
+                    <AccordionTrigger>Suggested Edits</AccordionTrigger>
+                    <AccordionContent>
+                       <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
+                         <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.suggestedEdits)}><Copy className="h-3 w-3"/></Button>
+                        {result.suggestedEdits}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-3">
+                    <AccordionTrigger>Matching Precedent</AccordionTrigger>
+                    <AccordionContent>
+                       <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
+                         <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={() => handleCopy(result.matchingPrecedent)}><Copy className="h-3 w-3"/></Button>
+                        {result.matchingPrecedent}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center text-muted-foreground">
-                    <p>The result of the document review will appear here.</p>
+                    <p>The analysis of your document will appear here.</p>
                   </div>
                 </div>
               )}
