@@ -174,6 +174,7 @@ export default function LoginPage() {
             name: result.user.displayName,
             email: result.user.email,
             role: 'public', // Default role for social sign-ups
+            createdAt: new Date().toISOString(),
         });
       }
       await handleSuccessfulLogin(result.user);

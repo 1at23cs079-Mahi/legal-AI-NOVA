@@ -31,17 +31,20 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 
 function initializeFirebase(): FirebaseServices {
-  if (!firebaseApp) {
-    if (getApps().length === 0) {
-      firebaseApp = initializeApp(firebaseConfig);
-    } else {
-      firebaseApp = getApps()[0];
+  if (typeof window !== 'undefined') {
+    if (!firebaseApp) {
+      if (getApps().length === 0) {
+        firebaseApp = initializeApp(firebaseConfig);
+      } else {
+        firebaseApp = getApps()[0];
+      }
+      auth = getAuth(firebaseApp);
+      db = getFirestore(firebaseApp);
     }
-    auth = getAuth(firebaseApp);
-    db = getFirestore(firebaseApp);
   }
-
-  return { app: firebaseApp, auth: auth!, db: db! };
+  // This is a safeguard for server-side rendering, though client-provider should prevent this.
+  // @ts-ignore
+  return { app: firebaseApp, auth: auth, db: db };
 }
 
 export * from './provider';
