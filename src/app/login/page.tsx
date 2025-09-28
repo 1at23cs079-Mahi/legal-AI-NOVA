@@ -19,7 +19,7 @@ import { Github, Chrome, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, browserSessionPersistence, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 
@@ -33,7 +33,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<'google' | 'github' | null>(null);
 
-  const handleSuccessfulLogin = async (user: any) => {
+  const handleSuccessfulLogin = async (user: User) => {
     if (!db) {
         toast({
             variant: 'destructive',
@@ -97,35 +97,19 @@ export default function LoginPage() {
 
     // --- DEMO MODE ---
     if (password === 'password') {
-        let demoUser = null;
+        let demoUser: { name: string; role: string; email: string; uid?: string } | null = null;
         if (email === 'advocate@legalai.com') {
-            demoUser = { name: 'Demo Advocate', role: 'advocate', email: 'advocate@legalai.com' };
+            demoUser = { uid: 'demo-advocate', name: 'Demo Advocate', role: 'advocate', email: 'advocate@legalai.com' };
         } else if (email === 'student@legalai.com') {
-            demoUser = { name: 'Demo Student', role: 'student', email: 'student@legalai.com' };
+            demoUser = { uid: 'demo-student', name: 'Demo Student', role: 'student', email: 'student@legalai.com' };
         } else if (email === 'public@legalai.com') {
-            demoUser = { name: 'Demo User', role: 'public', email: 'public@legalai.com' };
+            demoUser = { uid: 'demo-public', name: 'Demo User', role: 'public', email: 'public@legalai.com' };
         } else if (email === 'admin@legalai.com') {
-            demoUser = { name: 'Demo Admin', role: 'admin', email: 'admin@legalai.com' };
+            demoUser = { uid: 'demo-admin', name: 'Demo Admin', role: 'admin', email: 'admin@legalai.com' };
         }
 
         if (demoUser) {
-            toast({
-                title: 'Demo Login Successful',
-                description: `Welcome, ${demoUser.name}!`,
-            });
-
-            if (demoUser.role === 'admin') {
-              router.push('/admin/dashboard');
-              setIsLoading(false);
-              return;
-            }
-
-            const queryParams = new URLSearchParams({
-                name: demoUser.name,
-                role: demoUser.role,
-                email: demoUser.email,
-            });
-            router.push(`/dashboard?${queryParams.toString()}`);
+            await handleSuccessfulLogin(demoUser as User);
             setIsLoading(false);
             return;
         }
