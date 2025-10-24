@@ -23,6 +23,8 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider,
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
