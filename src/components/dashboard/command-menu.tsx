@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FileText, History, Scale, Search, Languages, Mic } from 'lucide-react';
 
 interface CommandMenuProps {
@@ -35,6 +35,11 @@ export function CommandMenu({ input, setInput }: CommandMenuProps) {
 
     }, [input]);
 
+    const handleSelectCommand = useCallback((command: typeof commands[0]) => {
+        setInput(`/${command.name} `);
+        setShowMenu(false);
+    }, [setInput]);
+
      useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (showMenu) {
@@ -47,10 +52,8 @@ export function CommandMenu({ input, setInput }: CommandMenuProps) {
                 } else if (e.key === 'Enter' || e.key === 'Tab') {
                     e.preventDefault();
                     if(filteredCommands[activeIndex]) {
-                        const command = filteredCommands[activeIndex];
-                        setInput(`/${command.name} `);
+                        handleSelectCommand(filteredCommands[activeIndex]);
                     }
-                    setShowMenu(false);
                 } else if (e.key === 'Escape') {
                     setShowMenu(false);
                 }
@@ -59,12 +62,8 @@ export function CommandMenu({ input, setInput }: CommandMenuProps) {
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [showMenu, filteredCommands, activeIndex, setInput]);
+    }, [showMenu, filteredCommands, activeIndex, handleSelectCommand]);
 
-    const handleCommandClick = (command: typeof commands[0]) => {
-        setInput(`/${command.name} `);
-        setShowMenu(false);
-    };
 
     if (!showMenu || filteredCommands.length === 0) return null;
 
@@ -77,7 +76,7 @@ export function CommandMenu({ input, setInput }: CommandMenuProps) {
                         <li
                             key={command.name}
                             onMouseEnter={() => setActiveIndex(index)}
-                            onClick={() => handleCommandClick(command)}
+                            onClick={() => handleSelectCommand(command)}
                             className={`flex items-center gap-3 p-2 rounded-md cursor-pointer text-sm ${
                                 index === activeIndex ? 'bg-muted' : ''
                             }`}

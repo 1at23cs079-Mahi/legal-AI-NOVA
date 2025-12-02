@@ -23,7 +23,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col flex-1">
           <DashboardHeader selectedLlm={selectedLlm} setSelectedLlm={setSelectedLlm} />
           <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-            {React.cloneElement(children as React.ReactElement, { selectedLlm })}
+            {React.isValidElement(children)
+              ? React.cloneElement(children as React.ReactElement<{ selectedLlm: ModelId }>, { selectedLlm })
+              : children
+            }
           </main>
         </div>
       </div>
