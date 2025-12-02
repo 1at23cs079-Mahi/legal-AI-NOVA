@@ -26,13 +26,18 @@ const DraftLegalDocumentOutputSchema = z.object({
 export type DraftLegalDocumentOutput = z.infer<typeof DraftLegalDocumentOutputSchema>;
 
 export async function draftLegalDocument(input: DraftLegalDocumentInput): Promise<DraftLegalDocumentOutput> {
-  return draftLegalDocumentFlow(input);
+  const stream = draftLegalDocumentFlow(input);
+  let finalResponse = "";
+  for await (const chunk of stream) {
+    finalResponse = chunk;
+  }
+  return { draft: finalResponse };
 }
 
 const prompt = ai.definePrompt({
   name: 'draftLegalDocumentPrompt',
   input: {schema: DraftLegalDocumentInputSchema},
-  output: {schema: DraftLegalDocumentOutputSchema},
+  output: { format: 'text' },
   prompt: `You are an expert legal drafting system for the Indian jurisdiction.
 Your role is to produce precise, professional legal documents tailored to the user's request and compliant with Indian legal standards.
 You must always output a complete, correctly formatted draft without showing your reasoning.
@@ -226,14 +231,25 @@ User Request: {{{query}}}
   `,
 });
 
-const draftLegalDocumentFlow = ai.defineFlow(
+export const draftLegalDocumentFlow = ai.defineFlow(
   {
     name: 'draftLegalDocumentFlow',
     inputSchema: DraftLegalDocumentInputSchema,
-    outputSchema: DraftLegalDocumentOutputSchema,
+    outputSchema: z.string(),
+    stream: true,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input, streamingCallback) => {
+    const {stream, response} = await ai.generateStream({
+        prompt: await prompt(input),
+    });
+
+    for await (const chunk of stream) {
+        if (chunk.text) {
+            streamingCallback(chunk.text);
+        }
+    }
+
+    const result = await response;
+    return result.text;
   }
 );

@@ -13,10 +13,9 @@ import {
 import { Label } from '@/components/ui/label';
 import { Loader2, Copy, FileSignature, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { streamFlow } from '@genkit-ai/next/client';
 import {
-  draftLegalDocument,
   DraftLegalDocumentInput,
-  DraftLegalDocumentOutput,
 } from '@/ai/flows/draft-legal-document';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '../ui/textarea';
@@ -27,7 +26,7 @@ export function DraftDocument() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState('');
-  const [result, setResult] = useState<DraftLegalDocumentOutput | null>(null);
+  const [result, setResult] = useState<string | null>(null);
 
   const getRole = () => {
     const role = searchParams.get('role');
@@ -46,15 +45,22 @@ export function DraftDocument() {
     }
 
     setIsLoading(true);
-    setResult(null);
+    setResult('');
 
     try {
       const input: DraftLegalDocumentInput = {
         query,
         userRole: getRole(),
       };
-      const response = await draftLegalDocument(input);
-      setResult(response);
+      
+      const stream = streamFlow('draftLegalDocumentFlow', input, {
+        adapterUrl: '/api/chat',
+      });
+
+      for await (const chunk of stream) {
+        setResult(chunk);
+      }
+
     } catch (error: any) {
       console.error('Document drafting failed:', error);
       toast({
@@ -62,6 +68,7 @@ export function DraftDocument() {
         title: 'An error occurred',
         description: error.message || 'Failed to draft the document. Please try again.',
       });
+      setResult("An error occurred while drafting the document.");
     } finally {
       setIsLoading(false);
     }
@@ -131,11 +138,11 @@ export function DraftDocument() {
             <CardTitle>Generated Draft</CardTitle>
             {result && (
                <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleDownload(result.draft)}>
+                <Button variant="outline" size="sm" onClick={() => handleDownload(result)}>
                   <Download className="mr-2 h-4 w-4" />
                   Download .txt
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleCopy(result.draft)}>
+                <Button variant="ghost" size="icon" onClick={() => handleCopy(result)}>
                     <Copy className="h-4 w-4" />
                 </Button>
               </div>
@@ -143,17 +150,17 @@ export function DraftDocument() {
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto bg-muted/40 p-4">
             <ScrollArea className="h-full w-full">
-              {isLoading ? (
+              {isLoading && !result ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-muted-foreground">AI is drafting your document...</p>
                   </div>
                 </div>
-              ) : result ? (
+              ) : result || isLoading ? (
                  <div className="mx-auto w-full max-w-4xl bg-background shadow-lg p-8 md:p-12 rounded-lg text-foreground">
                     <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
-                      {result.draft}
+                      {result}{isLoading && <span className="inline-block w-2 h-4 bg-foreground animate-pulse ml-1" />}
                     </div>
                 </div>
               ) : (
