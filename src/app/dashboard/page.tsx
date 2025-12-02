@@ -136,6 +136,12 @@ const roleConfig = {
                 icon: Gavel,
                 href: "/dashboard/case-management?command=pil"
             },
+             {
+                title: "Translate Legal Text",
+                description: "Translate complex legal text between supported languages.",
+                icon: Languages,
+                href: "/dashboard/translation"
+            },
         ]
     }
 }
