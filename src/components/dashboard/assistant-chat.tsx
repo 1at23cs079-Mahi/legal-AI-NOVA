@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect, memo, useCallback } from 'react';
+import { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -124,10 +124,10 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
-  const name = searchParams.get('name') || 'User';
-  const email = searchParams.get('email') || '';
-  const userAvatar = `https://picsum.photos/seed/${email}/40/40`;
-  const botAvatar = `https://picsum.photos/seed/bot/40/40`;
+  const name = useMemo(() => searchParams.get('name') || 'User', [searchParams]);
+  const email = useMemo(() => searchParams.get('email') || '', [searchParams]);
+  const userAvatar = useMemo(() => `https://picsum.photos/seed/${email}/40/40`, [email]);
+  const botAvatar = useMemo(() => `https://picsum.photos/seed/bot/40/40`, []);
 
   const getRole = useCallback(() => {
     const role = searchParams.get('role');
@@ -212,7 +212,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     } finally {
         setIsLoading(false);
     }
-  }, [userAvatar, name, getRole]);
+  }, [userAvatar, name, getRole, botAvatar]);
 
   useEffect(() => {
     // Check for a transcript passed from the transcription page

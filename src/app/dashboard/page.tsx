@@ -170,7 +170,7 @@ export default function DashboardPage() {
     return { ...config, welcome: finalWelcome };
   }, [role, name]);
 
-  const recentActivities = [
+  const recentActivities = useMemo(() => [
     {
       action: 'Drafted a new petition',
       details: 'Civil Suit for Recovery',
@@ -186,7 +186,7 @@ export default function DashboardPage() {
       details: 'Lease_Agreement_Final.pdf',
       time: '1 day ago',
     },
-  ];
+  ], []);
 
   return (
     <div className="flex-1 space-y-8 p-4 md:p-8 animate-fade-in">
