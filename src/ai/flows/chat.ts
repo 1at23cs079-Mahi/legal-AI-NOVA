@@ -196,7 +196,7 @@ export const chatWithTools = ai.defineFlow(
     stream: true,
   },
   async (input, streamingCallback) => {
-    const model = input.model ? ai.getModel(input.model as ModelReference) : ai.getModel('googleai/gemini-1.5-pro');
+    const model = input.model ? ai.getModel(input.model as ModelReference) : ai.getModel('googleai/gemini-pro');
     
     const {stream, response} = ai.generateStream({
         model,

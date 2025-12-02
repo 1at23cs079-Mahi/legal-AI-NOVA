@@ -29,8 +29,7 @@ export type ModelId = ModelReference;
 const llms: { id: ModelId; name: string, description: string }[] = [
     { id: 'googleai/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and cost-effective for high-frequency tasks.' },
     { id: 'googleai/gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast, multimodal model for varied tasks.' },
-    { id: 'googleai/gemini-pro', name: 'Gemini Pro', description: 'Legacy model, balanced performance.' },
-    { id: 'googleai/gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Advanced reasoning, great for complex analysis.' },
+    { id: 'googleai/gemini-pro', name: 'Gemini Pro', description: 'Solid reliability and performance for general tasks.' },
     { id: 'googleai/gemini-2.5-pro-vision', name: 'Gemini 2.5 Pro Vision', description: 'Specialized for visual understanding.'},
     { id: 'googleai/text-embedding-004', name: 'Text Embedding 004', description: 'Generates text embeddings.'}
 ];
