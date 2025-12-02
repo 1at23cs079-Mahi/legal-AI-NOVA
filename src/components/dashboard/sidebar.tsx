@@ -123,18 +123,6 @@ export function DashboardSidebar() {
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname === '/dashboard/transcription'}
-                        tooltip={{ children: 'Audio Transcription', side: 'right' }}
-                    >
-                        <Link href={`/dashboard/transcription?${queryString}`}>
-                            <Mic />
-                            <span>Audio Transcription</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
                  <SidebarMenuItem>
                     <SidebarMenuButton
                         asChild
