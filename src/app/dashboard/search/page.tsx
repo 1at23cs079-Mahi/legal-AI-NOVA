@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { searchCaseLaw, CaseLaw, SearchCaseLawInput } from '@/ai/flows/search-case-law';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const subjectOptions = [
     'Constitutional Law',
@@ -110,7 +111,10 @@ export default function CaseLawSearchPage() {
           <CardHeader>
             <CardTitle>Karnataka High Court Case Search</CardTitle>
             <CardDescription>
-              Search for cases from the Karnataka High Court database.
+              Search our database for cases. For official records, visit the{' '}
+              <Link href="https://judiciary.karnataka.gov.in/casemenu.php" target="_blank" rel="noopener noreferrer" className="underline font-medium text-primary">
+                official website
+              </Link>.
             </CardDescription>
           </CardHeader>
           <CardContent>
