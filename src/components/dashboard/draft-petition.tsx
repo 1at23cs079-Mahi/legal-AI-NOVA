@@ -126,7 +126,7 @@ export function DraftPetition() {
       </div>
 
       <div className="flex flex-col">
-        <Card className="flex-1 flex flex-col">
+        <Card className="flex-1 flex flex-col overflow-hidden">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Generated Draft</CardTitle>
             {result && (
@@ -141,7 +141,7 @@ export function DraftPetition() {
               </div>
             )}
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
+          <CardContent className="flex-1 overflow-y-auto bg-muted/40 p-4">
             <ScrollArea className="h-full w-full">
               {isLoading ? (
                 <div className="flex h-full items-center justify-center">
@@ -151,8 +151,10 @@ export function DraftPetition() {
                   </div>
                 </div>
               ) : result ? (
-                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative text-foreground">
-                  {result.draft}
+                 <div className="mx-auto w-full max-w-4xl bg-background shadow-lg p-8 md:p-12 rounded-lg text-foreground">
+                    <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
+                      {result.draft}
+                    </div>
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center">
