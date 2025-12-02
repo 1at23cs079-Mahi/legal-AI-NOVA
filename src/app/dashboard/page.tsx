@@ -17,7 +17,8 @@ import {
   Gavel,
   Languages,
   AlertTriangle,
-  FileSignature
+  FileSignature,
+  Voicemail
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -107,10 +108,10 @@ const roleConfig = {
                 href: "/dashboard/document-review"
             },
             {
-                title: "Translate Legal Text",
-                description: "Translate complex legal text into simpler terms or other languages.",
-                icon: Languages,
-                href: "/dashboard/translation"
+                title: "Voice Translation",
+                description: "Speak and translate conversations into different languages.",
+                icon: Voicemail,
+                href: "/dashboard/voice-translation"
             },
         ]
     },
@@ -137,10 +138,10 @@ const roleConfig = {
                 href: "/dashboard/case-management?command=pil"
             },
              {
-                title: "Translate Legal Text",
-                description: "Translate complex legal text between supported languages.",
-                icon: Languages,
-                href: "/dashboard/translation"
+                title: "Voice Translation",
+                description: "Speak and translate conversations into different languages.",
+                icon: Voicemail,
+                href: "/dashboard/voice-translation"
             },
         ]
     }
