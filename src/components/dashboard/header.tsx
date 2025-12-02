@@ -21,7 +21,7 @@ import { useTheme } from '@/app/layout';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '../icons/logo';
-import { Sun, Moon, User, LogOut, LifeBuoy, Bot, Maximize, Minimize2, ChevronDown } from 'lucide-react';
+import { Sun, Moon, User, LogOut, LifeBuoy, Bot, PanelLeft, ChevronDown } from 'lucide-react';
 import type { ModelReference } from 'genkit/model';
 
 export type ModelId = ModelReference;
@@ -40,7 +40,7 @@ export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: 
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
-  const { open, setOpen } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const { auth } = useFirebase();
 
   const role = searchParams.get('role') || 'public';
@@ -72,7 +72,10 @@ export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: 
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-      <SidebarTrigger className="md:hidden" />
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+        <PanelLeft />
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
       <div className="flex items-center gap-2 md:hidden">
         <Logo iconClassName="text-primary" />
       </div>
@@ -102,19 +105,6 @@ export function DashboardHeader({ selectedLlm, setSelectedLlm }: { selectedLlm: 
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>
-
-        <div className="hidden md:flex items-center">
-            {open ? (
-                <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-                    <Minimize2 className="h-4 w-4" />
-                </Button>
-            ) : (
-                <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
-                    <Maximize className="h-4 w-4" />
-                </Button>
-            )}
-        </div>
-
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
