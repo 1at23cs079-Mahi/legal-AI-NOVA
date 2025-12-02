@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview A conversational AI agent for legal queries using RAG.
+ * @fileOverview A conversational AI agent for legal queries using RAG and tools.
  *
- * - chat - A function that handles conversational legal queries.
+ * - chatWithTools - A function that handles conversational legal queries.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
@@ -12,33 +12,37 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { searchCaseLawDatabase } from '@/services/legal-search';
-import { ModelReference, prompt } from 'genkit/model';
+import { draftLegalPetition } from './draft-legal-petition';
+import { explainLegalTerm } from './explain-legal-term';
+import { translateText } from './translate-text';
 
-export type ChatInput = z.infer<typeof ChatInputSchema>;
 const ChatInputSchema = z.object({
   message: z.string().describe('The user message'),
   history: z.array(z.object({
-    role: z.enum(['user', 'model']),
+    role: z.enum(['user', 'model', 'tool']),
     content: z.array(z.object({
       text: z.string().optional(),
+      toolRequest: z.any().optional(),
+      toolResponse: z.any().optional(),
     }))
   })).optional().describe('The conversation history.'),
   userRole: z
     .enum(['Advocate', 'Student', 'Public'])
     .describe('The role of the user.'),
-  model: z.custom<ModelReference>().optional(),
 });
+export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 const ChatOutputSchema = z.object({
   role: z.literal('model'),
   content: z.string().describe('The model\'s response.'),
 });
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-const legalSearch = ai.defineTool(
+// Tool for searching the case law database
+const legalSearchTool = ai.defineTool(
     {
       name: 'legalSearch',
-      description: 'Search for relevant legal documents and case law from the knowledge base.',
+      description: 'Search for relevant legal documents, precedents, and case law from the knowledge base.',
       inputSchema: z.object({
         query: z.string().describe('A specific search query about legal topics, cases, or statutes.'),
       }),
@@ -60,52 +64,74 @@ const legalSearch = ai.defineTool(
     }
 );
 
-export const chatPrompt = prompt({
+// Tool for drafting legal petitions
+const draftPetitionTool = ai.defineTool({
+    name: 'draftLegalPetition',
+    description: "Drafts a legal petition based on the user's detailed request. The user must provide sufficient details about the case for the draft to be created.",
+    inputSchema: z.object({
+        query: z.string().describe('The details of the legal petition to draft.'),
+        userRole: z.enum(['Advocate', 'Student', 'Public']).describe('The role of the user.'),
+    }),
+    outputSchema: z.string(),
+}, async (input) => {
+    const result = await draftLegalPetition(input);
+    return result.draft;
+});
+
+
+// Tool for explaining legal terms
+const explainTermTool = ai.defineTool({
+    name: 'explainLegalTerm',
+    description: 'Explains a complex legal term in a simple and easy-to-understand manner.',
+    inputSchema: z.object({
+        term: z.string().describe('The legal term to explain.'),
+    }),
+    outputSchema: z.string(),
+}, async (input) => {
+    const result = await explainLegalTerm(input);
+    return result.explanation;
+});
+
+
+// Tool for translating text
+const translateTextTool = ai.defineTool({
+    name: 'translateText',
+    description: 'Translates a given text to a specified target language.',
+    inputSchema: z.object({
+        text: z.string().describe('The text to be translated.'),
+        targetLanguage: z.string().describe('The target language for translation (e.g., "Hindi", "Kannada").'),
+    }),
+    outputSchema: z.string(),
+}, async (input) => {
+    const result = await translateText(input);
+    return result.translatedText;
+});
+
+
+export const chatPrompt = ai.definePrompt({
     name: 'chatPrompt',
-    system: `You are LegalAi, a world-class RAG-based AI assistant for the Indian legal system. Your primary directive is to provide the most accurate and reliable information possible.
+    system: `You are LegalAi, a world-class RAG-based AI assistant for the Indian legal system. Your primary directive is to provide the most accurate and reliable information possible by intelligently using the tools at your disposal.
 
 Core Instructions:
-1.  **Prioritize Accuracy and Sourced Information**: Whenever possible, your responses MUST be grounded in the information provided by the 'legalSearch' tool.
-2.  **Use General Knowledge When Appropriate**: If the 'legalSearch' tool does not provide a relevant answer, you may use your general knowledge to respond. When you do, you should state that the information is from your general knowledge base.
-3.  **Cite Everything from Sources**: Any information you provide that comes from the tool's output must be attributed to its source. Use clear citations (e.g., "[Citation: AIR 1973 SC 1461]").
-4.  **Synthesize, Don't Paraphrase**: Analyze and synthesize the information from sources to provide a comprehensive answer. Do not simply copy-paste.
+1.  **Prioritize Accuracy and Sourced Information**: Whenever a user asks a question that can be answered with case law or legal documents, you MUST use the 'legalSearch' tool.
+2.  **Intelligently Use Your Tools**: You have several tools. Use 'draftLegalPetition' for drafting, 'explainLegalTerm' for definitions, and 'translateText' for translations. Be proactive in using them when the user's intent is clear.
+3.  **Cite Everything from Sources**: Any information you provide that comes from the 'legalSearch' tool must be attributed to its source. Use clear citations (e.g., "[Citation: AIR 1973 SC 1461]").
+4.  **Synthesize, Don't Paraphrase**: Analyze and synthesize information from sources to provide a comprehensive answer.
 5.  **Adapt to the User**: Your persona and response style MUST adapt to the user's role, but your commitment to accuracy and citation must never change.
 
 - User Role: {{userRole}}
 
 Response Guidelines by Role:
-- When the user is an 'Advocate':
-  - Be concise, technical, and precise.
-  - Assume a high level of legal knowledge.
-  - Focus on case law, statutes, citations, and strategic insights derived directly from the sources.
-  - Use formal legal language.
-  - Example: "The principle of basic structure, established in Kesavananda Bharati vs. State of Kerala [Citation: AIR 1973 SC 1461], limits Parliament's amending power. The provided documents indicate that..."
+- When the user is an 'Advocate': Be concise, technical, and precise. Focus on case law, statutes, and strategic insights.
+- When the user is a 'Student': Be educational and comprehensive. Explain concepts and provide context.
+- When the user is from the 'Public': Be simple, empathetic, and clear. Avoid jargon and always add a disclaimer.
 
-- When the user is a 'Student':
-  - Be educational, comprehensive, and structured.
-  - Explain legal concepts and define jargon, referencing the source material or your general knowledge if sources are unavailable.
-  - Provide context and explain the significance of the information.
-  - Example: "The 'legalSearch' tool found 'Maneka Gandhi vs. Union of India' [Citation: AIR 1978 SC 597], a pivotal case that expanded Article 21. It introduced the concept of 'due process,' meaning the law must be fair and not arbitrary. This is important because..."
-
-- When the user is from the 'Public':
-  - Be simple, empathetic, and clear. Avoid legal jargon where possible.
-  - If a legal term from a source or your knowledge base is necessary, explain it immediately in simple terms.
-  - Focus on rights, procedures, and practical steps based on available information.
-  - Frame every response with a clear disclaimer.
-  - Example: "Based on the information I found, there is a concept called 'anticipatory bail' from a case called Gurbaksh Singh Sibbia vs. State of Punjab [Citation: (1980) 2 SCC 565]. This means a person can ask a court for bail if they are afraid they might be arrested. Please remember, this is general information and not legal advice. You should always speak to a qualified lawyer for your specific situation."
-
-**Disclaimer and Rules of Use**:
-- This is not legal advice. All responses are for informational purposes only.
-- Always consult a qualified legal professional for any legal issues.
-- Do not use the information provided for any illegal activities or to harass, harm, or defame individuals.
-- LegalAI is not liable for any actions taken based on the information provided.
+**Disclaimer for Public Users**: When the user role is 'Public', ALWAYS end your response with: "Please remember, this is for informational purposes only and is not legal advice. You should consult with a qualified legal professional for your specific situation."
 `,
-    tools: [legalSearch],
+    tools: [legalSearchTool, draftPetitionTool, explainTermTool, translateTextTool],
     input: {
       schema: z.object({
         userRole: z.string(),
-        message: z.string(),
-        history: z.array(z.any()).optional(),
       }),
     },
     output: {
@@ -114,31 +140,29 @@ Response Guidelines by Role:
 });
 
 
-export const chat = ai.defineFlow(
+export const chatWithTools = ai.defineFlow(
   {
-    name: 'chatFlow',
+    name: 'chatWithToolsFlow',
     inputSchema: ChatInputSchema,
     outputSchema: ChatOutputSchema,
+    stream: true,
   },
-  async (input) => {
-    const { stream } = await ai.generate({
-        model: input.model,
-        prompt: {
-          text: input.message,
-          context: { userRole: input.userRole, history: input.history },
-        },
-        history: input.history,
-        promptName: 'chatPrompt',
-    });
+  async (input, streamingCallback) => {
 
-    let content = '';
-    for await (const chunk of stream) {
-        content += chunk.text;
-    }
+    const model = ai.getModel(ai.model.name);
+    
+    const response = await ai.generate({
+        model,
+        prompt: input.message,
+        history: input.history,
+        context: { userRole: input.userRole },
+        promptName: 'chatPrompt',
+        stream: streamingCallback
+    });
     
     return {
       role: 'model',
-      content,
+      content: response.text,
     };
   }
 );

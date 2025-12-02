@@ -97,18 +97,6 @@ export function DashboardSidebar() {
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton 
-                        asChild
-                        isActive={pathname === '/dashboard/legal-terminology'}
-                        tooltip={{ children: 'Legal Terminology', side: 'right' }}
-                    >
-                        <Link href={`/dashboard/legal-terminology?${queryString}`}>
-                            <BookOpen />
-                            <span>Legal Terminology</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton
                         asChild
@@ -118,18 +106,6 @@ export function DashboardSidebar() {
                         <Link href={`/dashboard/document-review?${queryString}`}>
                             <FileText />
                             <span>Document Review</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname === '/dashboard/draft-petition'}
-                        tooltip={{ children: 'Draft Petition', side: 'right' }}
-                    >
-                        <Link href={`/dashboard/draft-petition?${queryString}`}>
-                            <FileSignature />
-                            <span>Draft Petition</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -154,18 +130,6 @@ export function DashboardSidebar() {
                         <Link href={`/dashboard/search?${queryString}`}>
                             <Gavel />
                             <span>Case Law Search</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={pathname === '/dashboard/translation'}
-                        tooltip={{ children: 'Translate Text', side: 'right' }}
-                    >
-                        <Link href={`/dashboard/translation?${queryString}`}>
-                            <Languages />
-                            <span>Translate</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

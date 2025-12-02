@@ -21,8 +21,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { ModelId } from './header';
 import { CommandMenu } from './command-menu';
-import { useActions } from '@genkit-ai/next/use-actions';
+import { useActions, useStream } from '@genkit-ai/next/use-actions';
 import { generateCaseTimeline } from '@/ai/flows/generate-case-timeline';
+import { chatWithTools } from '@/ai/flows/chat';
 
 
 type Message = {
@@ -120,13 +121,13 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { stream, streaming, stop, error } = useStream(chatWithTools);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const name = searchParams.get('name') || 'User';
   const email = searchParams.get('email') || '';
   const userAvatar = `https://picsum.photos/seed/${email}/40/40`;
   const botAvatar = `https://picsum.photos/seed/bot/40/40`;
-  
-  const [isStreaming, setIsStreaming] = useState(false);
   
   useEffect(() => {
     // Check for a transcript passed from the transcription page
@@ -144,7 +145,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
         router.replace(`/dashboard/case-management?${newParams.toString()}`);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -159,7 +160,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     return 'Public';
   };
 
-  const handleTimelineCommand = async (commandInput: string, userMessage: Message, messageHistory: Message[]) => {
+  const handleTimelineCommand = async (commandInput: string) => {
       const modelMessageId = `model-${Date.now()}`;
       const modelMessage: Message = {
         id: modelMessageId,
@@ -192,73 +193,6 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
         setIsStreaming(false);
       }
   };
-  
-  const handleStreamedChat = async (messageContent: string, messageHistory: Message[]) => {
-    const modelMessageId = `model-${Date.now()}`;
-    const modelMessage: Message = {
-      id: modelMessageId,
-      role: 'model',
-      content: '',
-      avatar: botAvatar,
-      name: 'Legal AI',
-    };
-    setMessages(prev => [...prev, modelMessage]);
-
-    try {
-        const historyForApi = messageHistory
-          .filter(m => !m.error && m.role !== 'user') // Exclude user message that is part of the current prompt
-          .map(m => ({
-              role: m.role,
-              content: [{ text: m.content }],
-          }));
-        
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: messageContent,
-                history: historyForApi,
-                userRole: getRole(),
-                model: selectedLlm,
-            })
-        });
-
-        if (!response.body) {
-            throw new Error("No response body");
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            
-            setMessages(prev => prev.map(m => 
-                m.id === modelMessageId 
-                    ? { ...m, content: buffer }
-                    : m
-            ));
-        }
-
-    } catch (error: any) {
-      console.error('AI chat failed:', error);
-      setMessages(prev => prev.map(m => 
-        m.id === modelMessageId 
-            ? { 
-                ...m, 
-                content: "⚠️ The AI chat failed. This could be due to a network issue or an API error. Please try again.",
-                error: true
-              }
-            : m
-      ));
-    } finally {
-      setIsStreaming(false);
-    }
-  };
 
   const handleSendMessage = async (messageContent: string, messageHistory: Message[]) => {
     if (!messageContent.trim()) return;
@@ -276,16 +210,42 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     setInput('');
     setIsStreaming(true);
 
-    // Command handling
     if (messageContent.startsWith('/timeline ')) {
       const commandInput = messageContent.substring('/timeline '.length);
-      await handleTimelineCommand(commandInput, newUserMessage, updatedMessages);
-    } else {
-      // Default chat behavior
-      await handleStreamedChat(messageContent, updatedMessages);
+      await handleTimelineCommand(commandInput);
+      return;
     }
-  };
 
+    const historyForApi = messageHistory.map(m => ({
+      role: m.role as 'user' | 'model',
+      content: [{ text: m.content }],
+    }));
+
+    const responseStream = stream({
+      message: messageContent,
+      history: historyForApi,
+      userRole: getRole(),
+    });
+
+    const modelMessageId = `model-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: modelMessageId,
+      role: 'model',
+      content: '',
+      avatar: botAvatar,
+      name: 'Legal AI',
+    }]);
+
+    let currentContent = '';
+    for await (const chunk of responseStream) {
+        currentContent += chunk.text;
+        setMessages(prev => prev.map(m => 
+            m.id === modelMessageId ? { ...m, content: currentContent } : m
+        ));
+    }
+    setIsStreaming(false);
+  };
+  
   const handleRetry = (messageId: string) => {
     // Find the user message that came before the failed bot response
     const failedMessageIndex = messages.findIndex(m => m.id === messageId);
