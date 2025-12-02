@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -129,70 +129,14 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
   const userAvatar = `https://picsum.photos/seed/${email}/40/40`;
   const botAvatar = `https://picsum.photos/seed/bot/40/40`;
 
-  useEffect(() => {
-    // Check for a transcript passed from the transcription page
-    const fromTranscript = searchParams.get('from_transcript');
-    if (fromTranscript === 'true') {
-      const transcript = sessionStorage.getItem('transcriptToChat');
-      if (transcript) {
-        const initialUserMessage = `Please analyze the following transcript:\n\n---\n\n${transcript}`;
-        handleSendMessage(initialUserMessage, []);
-        sessionStorage.removeItem('transcriptToChat');
-
-        // Clean up the URL
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.delete('from_transcript');
-        router.replace(`/dashboard/case-management?${newParams.toString()}`);
-      }
-    }
-  }, [searchParams, router]);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [messages, isLoading]);
-
-  const getRole = () => {
+  const getRole = useCallback(() => {
     const role = searchParams.get('role');
     if (role === 'advocate') return 'Advocate';
     if (role === 'student') return 'Student';
     return 'Public';
-  };
+  }, [searchParams]);
 
-  const handleTimelineCommand = async (commandInput: string) => {
-      const modelMessageId = `model-${Date.now()}`;
-      const modelMessage: Message = {
-        id: modelMessageId,
-        role: 'model',
-        content: '',
-        avatar: botAvatar,
-        name: 'Legal AI',
-      };
-      setMessages(prev => [...prev, modelMessage]);
-
-      try {
-        const response = await generateCaseTimeline({ caseDetails: commandInput });
-        setMessages(prev => prev.map(m => 
-            m.id === modelMessageId 
-                ? { ...m, content: response.timeline }
-                : m
-        ));
-      } catch (error: any) {
-        console.error('Timeline generation failed:', error);
-        setMessages(prev => prev.map(m => 
-            m.id === modelMessageId 
-                ? { 
-                    ...m, 
-                    content: "⚠️ The AI task to generate a timeline failed. Please try again.",
-                    error: true
-                  }
-                : m
-        ));
-      }
-  };
-
-  const handleSendMessage = async (messageContent: string, messageHistory: Message[]) => {
+  const handleSendMessage = useCallback(async (messageContent: string, messageHistory: Message[]) => {
     if (!messageContent.trim()) return;
     
     setIsLoading(true);
@@ -268,9 +212,65 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     } finally {
         setIsLoading(false);
     }
+  }, [userAvatar, name, getRole]);
+
+  useEffect(() => {
+    // Check for a transcript passed from the transcription page
+    const fromTranscript = searchParams.get('from_transcript');
+    if (fromTranscript === 'true') {
+      const transcript = sessionStorage.getItem('transcriptToChat');
+      if (transcript) {
+        const initialUserMessage = `Please analyze the following transcript:\n\n---\n\n${transcript}`;
+        handleSendMessage(initialUserMessage, []);
+        sessionStorage.removeItem('transcriptToChat');
+
+        // Clean up the URL
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete('from_transcript');
+        router.replace(`/dashboard/case-management?${newParams.toString()}`);
+      }
+    }
+  }, [searchParams, router, handleSendMessage]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages, isLoading]);
+
+  const handleTimelineCommand = async (commandInput: string) => {
+      const modelMessageId = `model-${Date.now()}`;
+      const modelMessage: Message = {
+        id: modelMessageId,
+        role: 'model',
+        content: '',
+        avatar: botAvatar,
+        name: 'Legal AI',
+      };
+      setMessages(prev => [...prev, modelMessage]);
+
+      try {
+        const response = await generateCaseTimeline({ caseDetails: commandInput });
+        setMessages(prev => prev.map(m => 
+            m.id === modelMessageId 
+                ? { ...m, content: response.timeline }
+                : m
+        ));
+      } catch (error: any) {
+        console.error('Timeline generation failed:', error);
+        setMessages(prev => prev.map(m => 
+            m.id === modelMessageId 
+                ? { 
+                    ...m, 
+                    content: "⚠️ The AI task to generate a timeline failed. Please try again.",
+                    error: true
+                  }
+                : m
+        ));
+      }
   };
   
-  const handleRetry = (messageId: string) => {
+  const handleRetry = useCallback((messageId: string) => {
     // Find the user message that came before the failed bot response
     const failedMessageIndex = messages.findIndex(m => m.id === messageId);
     if (failedMessageIndex === -1 || failedMessageIndex === 0) return;
@@ -283,7 +283,7 @@ export function AssistantChat({ selectedLlm }: { selectedLlm: ModelId }) {
     
     // Resend the user's message
     handleSendMessage(userMessageToRetry.content, messagesBeforeFailure);
-  };
+  }, [messages, handleSendMessage]);
   
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
