@@ -21,8 +21,7 @@ const DraftLegalPetitionInputSchema = z.object({
 export type DraftLegalPetitionInput = z.infer<typeof DraftLegalPetitionInputSchema>;
 
 const DraftLegalPetitionOutputSchema = z.object({
-  draft: z.string().describe('The draft of the legal petition.'),
-  citations: z.array(z.string()).describe('Citations for the legal petition.'),
+  draft: z.string().describe('The draft of the legal petition, formatted with proper headings, sections, and placeholders for copy-pasting into a document editor.'),
 });
 export type DraftLegalPetitionOutput = z.infer<typeof DraftLegalPetitionOutputSchema>;
 
@@ -34,23 +33,22 @@ const prompt = ai.definePrompt({
   name: 'draftLegalPetitionPrompt',
   input: {schema: DraftLegalPetitionInputSchema},
   output: {schema: DraftLegalPetitionOutputSchema},
-  prompt: `You are LegalAi, an AI assistant specialized in drafting legal petitions for the Indian legal system.
-
-As LegalAi, you will draft a legal petition based on the user's request. You must follow the Indian legal hierarchy and cite all sources accurately.
-Your draft must be tailored to the user's role, adjusting the level of detail and complexity accordingly.
+  prompt: `You are LegalAi, an AI assistant specialized in drafting legal petitions for the Indian legal system. Your task is to generate a clean, well-formatted, and ready-to-use draft of a legal petition based on the user's request.
 
 User Role: {{{userRole}}}
 
 Drafting Request: {{{query}}}
 
-Instructions:
-1.  Based on the drafting request, identify relevant statutes and legal precedents.
-2.  Draft the legal petition. Include placeholders for case-specific details (e.g., "[Client's Name]", "[Address]").
-3.  Provide accurate citations for all legal assertions.
-4.  **Role-Based Customization**:
-    - For an 'Advocate', the draft should be formal, comprehensive, and ready for court filing, with detailed legal arguments.
-    - For a 'Student', the draft should be well-structured with clear sections and annotations explaining the purpose of each clause, serving as a learning tool.
-    - For a 'Public' user, the draft should be a simplified version or a pro-forma template, with clear explanations for each section and what information is needed. It should be framed as an informational guide, not a ready-to-file document.
+**Instructions for Drafting:**
+1.  **Structure and Formatting**: Create a formal legal petition structure. Use clear headings for different sections like "IN THE COURT OF [Court Name]", "PETITION UNDER [Relevant Section/Article]", "PARTIES", "MOST RESPECTFULLY SHOWETH:", "PRAYER", etc.
+2.  **Placeholders**: Use clear, bracketed placeholders for all case-specific details that the user must fill in (e.g., "[Client's Name]", "[Address]", "[Date]", "[Name of Petitioner]", "[Name of Respondent]").
+3.  **Content Generation**: Based on the user's query, generate the core factual narrative and legal grounds. Write in formal legal language.
+4.  **Whitespace and Alignment**: Use line breaks and indentation to ensure the document is perfectly aligned and readable. The final output should be formatted so it can be directly copied and pasted into a text editor or word processor without losing its structure.
+5.  **Role-Based Customization**:
+    - For an 'Advocate', the draft should be formal, comprehensive, and ready for court filing, with detailed legal arguments and placeholders for evidence.
+    - For a 'Student', the draft should be well-structured with annotations explaining the purpose of each clause, serving as a learning tool.
+    - For a 'Public' user, the draft should be a simplified pro-forma template with very clear explanations for each section and what information is needed.
+6.  **DO NOT INCLUDE DISCLAIMERS**: Your entire response should be only the legal draft itself. Do not add any introductory text, concluding remarks, or disclaimers. The output must be the raw, formatted petition.
   `,
 });
 

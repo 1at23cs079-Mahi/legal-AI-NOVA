@@ -11,11 +11,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2, Copy, FileSignature } from 'lucide-react';
+import { Loader2, Copy, FileSignature, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   draftLegalPetition,
   DraftLegalPetitionInput,
+  DraftLegalPetitionOutput,
 } from '@/ai/flows/draft-legal-petition';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '../ui/textarea';
@@ -26,7 +27,7 @@ export function DraftPetition() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState('');
-  const [result, setResult] = useState<{ draft: string; citations: string[] } | null>(null);
+  const [result, setResult] = useState<DraftLegalPetitionOutput | null>(null);
 
   const getRole = () => {
     const role = searchParams.get('role');
@@ -69,9 +70,25 @@ export function DraftPetition() {
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
     toast({
-      description: 'Copied to clipboard!',
+      description: 'Draft copied to clipboard!',
     });
   };
+  
+  const handleDownload = (content: string) => {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'petition_draft.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({
+      description: 'Draft downloaded as petition_draft.txt',
+    });
+  };
+
 
   return (
     <div className="grid md:grid-cols-2 gap-6 h-full">
@@ -113,9 +130,15 @@ export function DraftPetition() {
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Generated Draft</CardTitle>
             {result && (
-              <Button variant="ghost" size="icon" onClick={() => handleCopy(result.draft)}>
-                <Copy className="h-4 w-4" />
-              </Button>
+               <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleDownload(result.draft)}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download .txt
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleCopy(result.draft)}>
+                    <Copy className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
@@ -128,19 +151,8 @@ export function DraftPetition() {
                   </div>
                 </div>
               ) : result ? (
-                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative">
-                  <h3 className="font-semibold">Draft</h3>
-                  <p>{result.draft}</p>
-                  {result.citations.length > 0 && (
-                    <>
-                      <h3 className="font-semibold mt-4">Citations</h3>
-                      <ul className="list-disc pl-5">
-                        {result.citations.map((citation, index) => (
-                          <li key={index}>{citation}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap relative text-foreground">
+                  {result.draft}
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center">
